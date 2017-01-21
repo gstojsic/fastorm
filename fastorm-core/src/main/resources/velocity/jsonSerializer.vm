@@ -1,0 +1,45 @@
+package ${packageName};
+
+public final class ${className}JsonSerializer {
+
+    public static String toJson(${className} item) {
+        return "{" +
+        #foreach($field in $fields)
+            "\"${field.name}\":" +
+            #if($field.string)
+            "\"" +
+            #end
+            item.${field.getter}() +
+            #if($field.string)
+            "\"" +
+            #end
+
+            #if( $foreach.count < $fields.size() )
+                "," +
+            #end
+        #end
+        "}";
+    }
+/*
+    public static String toJson2(${className} item) {
+        StringBuilder sb = new StringBuilder();
+        boolean delimiter = false;
+
+        #foreach($field in $fields)
+            "\"${field.name}\":" +
+            #if($field.string)
+            "\"" +
+            #end
+            item.${field.getter}() +
+            #if($field.string)
+            "\"" +
+            #end
+
+            #if( $foreach.count < $fields.size() )
+                "," +
+            #end
+        #end
+        return sb.toString();
+    }
+*/
+}
