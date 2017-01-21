@@ -1,0 +1,8 @@
+package ${packageName};
+
+import com.skunkworks.fastorm.Repository;
+
+public class ${className}Repository implements Repository<${className}> {
+
+
+}

@@ -1,1 +1,1 @@
-com.skunkworks.serialization.JsonSerializationProcessor
+com.skunkworks.fastorm.impl.RepositoryProcessor
