@@ -50,7 +50,7 @@ public class RepositoryProcessor extends AbstractProcessor {
             }
 
             try {
-                generateRepository(annotatedElement, filer);
+                generateRepository(annotatedElement);
             } catch (Exception e) {
                 error(null, e.getMessage());
             }
@@ -58,8 +58,8 @@ public class RepositoryProcessor extends AbstractProcessor {
         return false;
     }
 
-    private void generateRepository(Element annotatedElement, Filer filer) throws Exception {
-        //List<JsonSerializationProcessor.FieldData> fields = new ArrayList<>();
+    private void generateRepository(Element annotatedElement) throws Exception {
+        //List<FieldData> fields = new ArrayList<>();
 
         JavaFileObject jfo = filer.createSourceFile(
                 annotatedElement.getSimpleName() + "Repository");

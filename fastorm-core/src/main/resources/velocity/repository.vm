@@ -2,7 +2,37 @@ package ${packageName};
 
 import com.skunkworks.fastorm.Repository;
 
+import javax.sql.DataSource;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.List;
+
 public class ${className}Repository implements Repository<${className}> {
 
+    private final DataSource dataSource;
 
+    public ${className}Repository(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
+    public List<${className}> loadAll() throws Exception {
+        Connection connection = dataSource.getConnection();
+        CallableStatement callableStatement = connection.prepareCall("select * from ${className}");
+        ResultSet resultSet = callableStatement.executeQuery();
+        List<${className}> items = new ArrayList<>();
+        while (resultSet.next()) {
+            ${className} item = new ${className}();
+            //item.setId(resultSet.getLong("id"));
+            //item.setFirstName(resultSet.getString("first_name"));
+            //item.setLastName(resultSet.getString("last_name"));
+            item.setId(resultSet.getLong(1));
+            item.setFirstName(resultSet.getString(2));
+            item.setLastName(resultSet.getString(3));
+            items.add(item);
+        }
+        return items;
+    }
 }
