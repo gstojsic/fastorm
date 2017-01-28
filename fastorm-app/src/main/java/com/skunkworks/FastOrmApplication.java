@@ -60,7 +60,7 @@ public class FastOrmApplication {
 //                customers.add(customer);
 //            }
 //            customerRepo.save(customers);
-
+//
             //loadTest(dataSource);
 
 
@@ -80,7 +80,7 @@ public class FastOrmApplication {
                 }
             }, "LoadAll spring");
 
-            measureTime((Function<Void, List<Customer>>) t -> {
+            loadedFastOrm = measureTime((Function<Void, List<Customer>>) t -> {
                 try {
                     return customerRepository.loadAll();
                 } catch (Exception e) {
@@ -88,7 +88,7 @@ public class FastOrmApplication {
                 }
             }, "LoadAll fastOrm");
 
-            measureTime((Function<Void, Iterable<Customer>>) t -> {
+            loadedSpring = measureTime((Function<Void, Iterable<Customer>>) t -> {
                 try {
                     return customerRepo.findAll();
                 } catch (Exception e) {
@@ -96,7 +96,7 @@ public class FastOrmApplication {
                 }
             }, "LoadAll spring");
 
-            measureTime((Function<Void, List<Customer>>) t -> {
+            loadedFastOrm = measureTime((Function<Void, List<Customer>>) t -> {
                 try {
                     return customerRepository.loadAll();
                 } catch (Exception e) {
@@ -104,7 +104,7 @@ public class FastOrmApplication {
                 }
             }, "LoadAll fastOrm");
 
-            measureTime((Function<Void, Iterable<Customer>>) t -> {
+            loadedSpring = measureTime((Function<Void, Iterable<Customer>>) t -> {
                 try {
                     return customerRepo.findAll();
                 } catch (Exception e) {
@@ -112,7 +112,7 @@ public class FastOrmApplication {
                 }
             }, "LoadAll spring");
 
-            measureTime((Function<Void, List<Customer>>) t -> {
+            loadedFastOrm = measureTime((Function<Void, List<Customer>>) t -> {
                 try {
                     return customerRepository.loadAll();
                 } catch (Exception e) {
@@ -120,7 +120,23 @@ public class FastOrmApplication {
                 }
             }, "LoadAll fastOrm");
 
-            measureTime((Function<Void, Iterable<Customer>>) t -> {
+            loadedSpring = measureTime((Function<Void, Iterable<Customer>>) t -> {
+                try {
+                    return customerRepo.findAll();
+                } catch (Exception e) {
+                    return null;
+                }
+            }, "LoadAll spring");
+
+            loadedFastOrm = measureTime((Function<Void, List<Customer>>) t -> {
+                try {
+                    return customerRepository.loadAll();
+                } catch (Exception e) {
+                    return null;
+                }
+            }, "LoadAll fastOrm");
+
+            loadedSpring = measureTime((Function<Void, Iterable<Customer>>) t -> {
                 try {
                     return customerRepo.findAll();
                 } catch (Exception e) {
@@ -140,20 +156,4 @@ public class FastOrmApplication {
         log.info(message + ":" + stopWatch.getTime());
         return result;
     }
-
-//    private List<Customer> loadTest(DataSource dataSource) throws Exception {
-//        Connection connection = dataSource.getConnection();
-//        //CallableStatement callableStatement = connection.prepareCall("exec dbo.InsertCustomer ?, ?");
-//        CallableStatement callableStatement = connection.prepareCall("select * from Customer");
-//        ResultSet resultSet = callableStatement.executeQuery();
-//        List<Customer> customers = new ArrayList<>();
-//        while (resultSet.next()) {
-//            Customer customer = new Customer();
-//            customer.setId(resultSet.getLong("id"));
-//            customer.setFirstName(resultSet.getString("first_name"));
-//            customer.setLastName(resultSet.getString("last_name"));
-//            customers.add(customer);
-//        }
-//        return customers;
-//    }
 }
