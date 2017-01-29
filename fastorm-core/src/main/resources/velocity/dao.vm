@@ -1,0 +1,96 @@
+package ${packageName};
+
+import com.skunkworks.fastorm.Dao;
+
+import javax.sql.DataSource;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ${className} implements Dao<${entityName}, Long>, ${interfaceName} {
+
+    private final DataSource dataSource;
+
+    public ${className}(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
+    @Override
+    public ${entityName} save(${entityName} entity) {
+        return null;
+    }
+
+    @Override
+    public List<${entityName}> save(Iterable<${entityName}> entities) {
+        return null;
+    }
+
+    @Override
+    public ${entityName} findOne(Long aLong) {
+        return null;
+    }
+
+    @Override
+    public boolean exists(Long aLong) {
+        return false;
+    }
+
+    @Override
+    public List<${entityName}> findAll() {
+        try {
+            Connection connection = dataSource.getConnection();
+            CallableStatement callableStatement = connection.prepareCall("select ${selectColumns} from ${className}");
+            ResultSet resultSet = callableStatement.executeQuery();
+            List<${entityName}> items = new ArrayList<>();
+            while (resultSet.next()) {
+                items.add(mapToRow(resultSet));
+            }
+            return items;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public List<${entityName}> findAll(Iterable<Long> longs) {
+        return null;
+    }
+
+    @Override
+    public long count() {
+        return 0;
+    }
+
+    @Override
+    public void delete(Long aLong) {
+
+    }
+
+    @Override
+    public void delete(${entityName} entity) {
+
+    }
+
+    @Override
+    public void delete(Iterable<${entityName}> entities) {
+
+    }
+
+    @Override
+    public void deleteAll() {
+
+    }
+
+    //${selectColumns}
+    public static ${entityName} mapToRow(ResultSet resultSet) throws SQLException {
+        ${entityName} item = new ${entityName}();
+        #foreach($field in $fields)
+        item.${field.setter}(resultSet.get${field.recordsetType}(${field.index}));
+        #end
+        return item;
+    }
+}

@@ -39,12 +39,3 @@ public class ${className}Repository implements Repository<${className}> {
         return item;
     }
 }
-
-/*
-           //item.setId(resultSet.getLong("id"));
-            //item.setFirstName(resultSet.getString("first_name"));
-            //item.setLastName(resultSet.getString("last_name"));
-            item.setId(resultSet.getLong(1));
-            item.setFirstName(resultSet.getString(2));
-            item.setLastName(resultSet.getString(3));
- */

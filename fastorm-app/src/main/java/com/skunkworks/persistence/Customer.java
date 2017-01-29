@@ -1,12 +1,10 @@
 package com.skunkworks.persistence;
 
-import com.skunkworks.fastorm.GenerateRepository;
+import com.skunkworks.fastorm.annotations.GenerateRepository;
 import lombok.Data;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
 /**

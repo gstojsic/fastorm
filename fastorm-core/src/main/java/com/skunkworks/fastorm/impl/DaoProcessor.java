@@ -1,5 +1,6 @@
 package com.skunkworks.fastorm.impl;
 
+import com.skunkworks.fastorm.annotations.Dao;
 import com.skunkworks.fastorm.annotations.GenerateRepository;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -11,11 +12,17 @@ import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
+import javax.persistence.Column;
+import javax.persistence.Entity;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.io.Writer;
@@ -23,16 +30,15 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.persistence.Column;
-
 /**
- * stole on 21.01.17.
+ * stole on 29.01.17.
  */
-public class RepositoryProcessor extends AbstractProcessor {
+public class DaoProcessor extends AbstractProcessor {
     private Messager messager;
     private Filer filer;
 
@@ -46,27 +52,44 @@ public class RepositoryProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnvironment) {
 
-        for (Element annotatedElement : roundEnvironment.getElementsAnnotatedWith(GenerateRepository.class)) {
-
-            // Check if a class has been annotated with @GenerateRepository
-            if (annotatedElement.getKind() != ElementKind.CLASS) {
-                error(annotatedElement, "Only classes can be annotated with @%s",
-                        GenerateRepository.class.getSimpleName());
+        for (Element annotatedElement : roundEnvironment.getElementsAnnotatedWith(Dao.class)) {
+            // Check if a class has been annotated with @Dao
+            if (annotatedElement.getKind() != ElementKind.INTERFACE) {
+                error(annotatedElement, "Only interfaces can be annotated with @%s", Dao.class.getSimpleName());
                 return true; // Exit processing
             }
 
             try {
-                generateRepository(annotatedElement);
+                generateDao(annotatedElement);
             } catch (Exception e) {
-                error(null, e.getMessage());
+                error(e.getMessage());
+                //error(null, e.getMessage());
+                return true;
             }
         }
         return false;
     }
 
-    private void generateRepository(Element annotatedElement) throws Exception {
-        JavaFileObject jfo = filer.createSourceFile(
-                annotatedElement.getSimpleName() + "Repository");
+    private void generateDao(Element annotatedElement) throws Exception {
+        final String daoName = Dao.class.getName();
+        AnnotationValue daoValue = null;
+        for (AnnotationMirror am : annotatedElement.getAnnotationMirrors()) {
+            if (daoName.equals(am.getAnnotationType().toString())) {
+                for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : am.getElementValues().entrySet()) {
+                    if ("value".equals(entry.getKey().getSimpleName().toString())) {
+                        daoValue = entry.getValue();
+                        break;
+                    }
+                }
+            }
+        }
+
+        TypeMirror daoMirror = (TypeMirror) daoValue.getValue();
+        TypeElement daoValueElement = processingEnv.getElementUtils().getTypeElement(daoMirror.toString());
+
+        String interfaceName = annotatedElement.getSimpleName().toString();
+        String className = interfaceName + "Impl";
+        JavaFileObject jfo = filer.createSourceFile(className);
 
         Writer writer = jfo.openWriter();
 
@@ -82,13 +105,17 @@ public class RepositoryProcessor extends AbstractProcessor {
         PackageElement packageElement = (PackageElement) annotatedElement.getEnclosingElement();
 
         warn("package element:" + packageElement.toString());
+        warn("daoValueElement element:" + daoValueElement.toString());
 
         context.put("packageName", packageElement.getQualifiedName().toString());
-        context.put("className", annotatedElement.getSimpleName());
+        context.put("interfaceName", interfaceName);
+        context.put("className", className);
+        String entityName = daoValueElement.getSimpleName().toString();
+        context.put("entityName", entityName);
 
         List<FieldData> fields = new ArrayList<>();
         int fieldIndex = 1;
-        for (Element enclosedElement : annotatedElement.getEnclosedElements()) {
+        for (Element enclosedElement : daoValueElement.getEnclosedElements()) {
             String name = enclosedElement.getSimpleName().toString();
             if (enclosedElement.getKind().isField() && !"DEFAULT_VALUE".equals(name)) {
                 fields.add(processField(enclosedElement, name, fieldIndex));
@@ -102,7 +129,7 @@ public class RepositoryProcessor extends AbstractProcessor {
                 collect(Collectors.joining(", "));
         context.put("selectColumns", selectedColumns);
 
-        Template vt = ve.getTemplate("velocity/repository.vm");
+        Template vt = ve.getTemplate("velocity/dao.vm");
 
         vt.merge(context, writer);
 
@@ -143,7 +170,7 @@ public class RepositoryProcessor extends AbstractProcessor {
     @Override
     public Set<String> getSupportedAnnotationTypes() {
         Set<String> annotations = new LinkedHashSet<>();
-        annotations.add(GenerateRepository.class.getCanonicalName());
+        annotations.add(Dao.class.getCanonicalName());
         return annotations;
     }
 
