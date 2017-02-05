@@ -12,12 +12,11 @@ private final Query queryCtx = new Query();
 }
 
 query returns [Query ctx]
-   : FIND_BY expression finalExpression
+   : FIND_BY expression finalExpression?
    { $ctx = queryCtx; }
    ;
 
 expression
-   //: atom {System.out.println("left:" + $atom.text);} (operator atom{System.out.println("atom:" + $atom.text + ", operator:" + $operator.text);})*
    : atom (operator{queryCtx.addQueryOperator($operator.text);} atom)*
    ;
 
@@ -70,7 +69,3 @@ LETTER
 DIGIT
    : ('0' .. '9')
    ;
-
-//WS
-//   : [ \r\n\t] + -> channel (HIDDEN)
-//;

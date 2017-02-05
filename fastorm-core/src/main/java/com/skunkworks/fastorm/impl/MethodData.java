@@ -8,6 +8,7 @@ public class MethodData {
     private String name;
     private String returnType = "void";
     private String parameters;
+    private String query;
 
     public MethodType getType() {
         return type;
@@ -39,5 +40,13 @@ public class MethodData {
 
     public String getParameters() {
         return parameters;
+    }
+
+    public String getQuery() {
+        return query;
+    }
+
+    public void setQuery(String query) {
+        this.query = query;
     }
 }

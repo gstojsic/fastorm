@@ -81,7 +81,7 @@ public class RepositoryProcessor extends AbstractProcessor {
 
         PackageElement packageElement = (PackageElement) annotatedElement.getEnclosingElement();
 
-        warn("package element:" + packageElement.toString());
+        //warn("package element:" + packageElement.toString());
 
         context.put("packageName", packageElement.getQualifiedName().toString());
         context.put("className", annotatedElement.getSimpleName());
@@ -110,8 +110,8 @@ public class RepositoryProcessor extends AbstractProcessor {
     }
 
     private FieldData processField(Element field, String name, int fieldIndex) {
-        warn("element type:" + field.asType());
-        warn("element kind:" + field.asType().getKind());
+        //warn("element type:" + field.asType());
+        //warn("element kind:" + field.asType().getKind());
 
         String columnName = getColumnName(field, name);
         String getterPrefix = field.asType().getKind().equals(TypeKind.BOOLEAN) ? "is" : "get";

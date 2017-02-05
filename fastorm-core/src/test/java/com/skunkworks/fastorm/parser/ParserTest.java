@@ -35,6 +35,7 @@ public class ParserTest {
         // Begin parsing at rule query
         final QueryParser.QueryContext queryContext = parser.query();
         Query ctx = queryContext.ctx;
+        l.info("Syntax Errors:" + parser.getNumberOfSyntaxErrors());
         l.info("Done:" + queryContext.getText());
     }
 }

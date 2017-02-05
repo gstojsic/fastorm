@@ -1,9 +1,14 @@
 package com.skunkworks.fastorm.impl;
 
 import com.skunkworks.fastorm.annotations.Dao;
+import com.skunkworks.fastorm.parser.query.Query;
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
+import org.skunkworks.fastorm.parser.QueryLexer;
+import org.skunkworks.fastorm.parser.QueryParser;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -18,14 +23,20 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.persistence.Column;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.Writer;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -33,6 +44,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.StringJoiner;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -62,9 +75,11 @@ public class DaoProcessor extends AbstractProcessor {
             try {
                 generateDao(annotatedElement);
             } catch (Exception e) {
-                error(e.getMessage());
-                //error(null, e.getMessage());
-                return true;
+//                warn("banana" + e.getMessage());
+//                error(e.getMessage());
+//                //error(null, e.getMessage());
+//                return true;
+                throw new RuntimeException(e);
             }
         }
         return false;
@@ -91,22 +106,23 @@ public class DaoProcessor extends AbstractProcessor {
 
         //Interface Methods
         List<MethodData> queryMethods = new ArrayList<>();
+        List<MethodData> queryListMethods = new ArrayList<>();
         List<MethodData> storedProcedureMethods = new ArrayList<>();
         List<MethodData> unrecognizedMethods = new ArrayList<>();
+
         for (Element enclosedElement : annotatedElement.getEnclosedElements()) {
             if (ElementKind.METHOD.equals(enclosedElement.getKind())) {
                 MethodData methodData = processMethod(enclosedElement);
-                if (MethodType.QUERY.equals(methodData.getType())) {
+                if (MethodType.QUERY_SINGLE.equals(methodData.getType())) {
                     queryMethods.add(methodData);
+                } else if (MethodType.QUERY_LIST.equals(methodData.getType())) {
+                    queryListMethods.add(methodData);
                 } else if (MethodType.STORED_PROCEDURE.equals(methodData.getType())) {
                     storedProcedureMethods.add(methodData);
                 } else {
                     unrecognizedMethods.add(methodData);
                 }
-                queryMethods.add(processMethod(enclosedElement));
             }
-            String name = enclosedElement.getSimpleName().toString();
-            warn("element name:" + name + ", kind:" + enclosedElement.getKind());
         }
 
         String interfaceName = annotatedElement.getSimpleName().toString();
@@ -126,8 +142,8 @@ public class DaoProcessor extends AbstractProcessor {
 
         PackageElement packageElement = (PackageElement) annotatedElement.getEnclosingElement();
 
-        warn("package element:" + packageElement.toString());
-        warn("daoValueElement element:" + daoValueElement.toString());
+        //warn("package element:" + packageElement.toString());
+        //warn("daoValueElement element:" + daoValueElement.toString());
 
         context.put("packageName", packageElement.getQualifiedName().toString());
         context.put("interfaceName", interfaceName);
@@ -146,6 +162,7 @@ public class DaoProcessor extends AbstractProcessor {
         }
         context.put("fields", fields);
         context.put("queryMethods", queryMethods);
+        context.put("queryListMethods", queryListMethods);
         context.put("storedProcedureMethods", storedProcedureMethods);
         context.put("unrecognizedMethods", unrecognizedMethods);
         context.put("additionalImports", additionalImports);
@@ -168,8 +185,13 @@ public class DaoProcessor extends AbstractProcessor {
         methodData.setName(method.getSimpleName().toString());
 
         //Return type
-        TypeElement returnElement = processingEnv.getElementUtils().getTypeElement(method.getReturnType().toString());
-        methodData.setReturnType(returnElement.getSimpleName().toString());
+        warn(method.getReturnType().toString());
+        warn(method.getReturnType().getKind().toString());
+
+        TypeElement returnTypeElement = (TypeElement) processingEnv.getTypeUtils().asElement(method.getReturnType());
+        DeclaredType declaredReturnType = (DeclaredType) method.getReturnType();
+        //methodData.setReturnType(returnTypeElement.getSimpleName().toString());
+        methodData.setReturnType(getTypeString(returnTypeElement, declaredReturnType));
 
         //method parameters
         ArrayList<String> parameters = new ArrayList<>();
@@ -177,14 +199,79 @@ public class DaoProcessor extends AbstractProcessor {
             TypeElement paramElement = processingEnv.getElementUtils().getTypeElement(param.asType().toString());
             parameters.add(paramElement.getSimpleName().toString() + " " + param.getSimpleName());
         }
-        warn(parameters.toString());
+        //warn(parameters.toString());
         methodData.setParameters(String.join(", ", parameters));
+
+        //query method
+        processQueryMethod(methodData, declaredReturnType);
         return methodData;
     }
 
+    private void processQueryMethod(MethodData methodData, DeclaredType declaredReturnType) {
+        final InputStream is = new ByteArrayInputStream(methodData.getName().getBytes(Charset.forName("UTF-8")));
+        try {
+            final ANTLRInputStream inputStream = new ANTLRInputStream(is);
+            // Create an ExprLexer that feeds from that stream
+            final QueryLexer lexer = new QueryLexer(inputStream);
+            // Create a stream of tokens fed by the lexer
+            final CommonTokenStream tokens = new CommonTokenStream(lexer);
+            // Create a parser that feeds off the token stream
+            final QueryParser parser = new QueryParser(tokens);
+            // Begin parsing at rule query
+            final QueryParser.QueryContext queryContext = parser.query();
+            if (parser.getNumberOfSyntaxErrors() == 0) {
+                Query ctx = queryContext.ctx;
+                ArrayList<String> whereSegmentList = new ArrayList<>();
+                List<String> params = ctx.getQueryParams();
+                List<String> operators = ctx.getQueryOperators();
+                whereSegmentList.add(params.get(0) + " = ?");
+                for (int i = 1; i < params.size(); i++) {
+                    whereSegmentList.add(operators.get(i - 1));
+                    whereSegmentList.add(params.get(i) + " = ?");
+                }
+                methodData.setQuery(String.join(" ", whereSegmentList));
+                if (declaredReturnType.getTypeArguments().size() > 0) {
+                    methodData.setType(MethodType.QUERY_LIST);
+                } else {
+                    methodData.setType(MethodType.QUERY_SINGLE);
+                }
+
+                //TODO - fix prepared statement parameters and orderBy
+            } else {
+                warn("Method " + methodData.getName() + " has not been succesfully parsed.");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String getTypeString(TypeElement returnTypeElement, DeclaredType declaredReturnType) {
+//        for (TypeMirror tpe : declaredReturnType.getTypeArguments()) {
+//            warn("Type Parameter el:" + tpe.toString());
+//        }
+        //warn("Type Parameter:" + returnTypeElement.getTypeParameters().toString());
+        //warn(returnTypeElement.getSimpleName().toString());
+        //warn(returnTypeElement.toString());
+
+        if (declaredReturnType.getTypeArguments().size() > 0) {
+            String typeParameters = declaredReturnType.getTypeArguments().stream().
+                    map(typeMirror -> {
+                        TypeElement paramElement = processingEnv.getElementUtils().getTypeElement(typeMirror.toString());
+                        return paramElement.getSimpleName().toString();
+                        //return typeMirror.toString();
+                    }).
+                    collect(Collectors.joining(", "));
+
+            return returnTypeElement.getSimpleName().toString() +
+                    '<' + String.join(", ", typeParameters) + '>';
+        } else {
+            return returnTypeElement.getSimpleName().toString();
+        }
+    }
+
     private FieldData processField(Element field, String name, int fieldIndex) {
-        warn("element type:" + field.asType());
-        warn("element kind:" + field.asType().getKind());
+        //warn("element type:" + field.asType());
+        //warn("element kind:" + field.asType().getKind());
 
         String columnName = getColumnName(field, name);
         String getterPrefix = field.asType().getKind().equals(TypeKind.BOOLEAN) ? "is" : "get";

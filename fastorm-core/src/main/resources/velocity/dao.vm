@@ -113,6 +113,37 @@ public class ${className} implements Dao<${entityName}, Long>, ${interfaceName} 
         return item;
     }
 
+    #foreach($method in $queryMethods)
+
+    @Override
+    public ${method.returnType} ${method.name}(${method.parameters}) { //HEHE
+        throw new UnsupportedOperationException("${method.name}");
+    }
+    #end
+    #foreach($method in $queryListMethods)
+
+    @Override
+    public ${method.returnType} ${method.name}(${method.parameters}) {
+        try(Connection connection = dataSource.getConnection()) {
+            PreparedStatement preparedStatement = connection.prepareStatement("select ${selectColumns} from ${entityName} where ${method.query}");
+            ResultSet resultSet = preparedStatement.executeQuery();
+            List<${entityName}> items = new ArrayList<>();
+            while (resultSet.next()) {
+                items.add(mapToRow(resultSet));
+            }
+            return items;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    #end
+    #foreach($method in $storedProcedureMethods)
+
+    @Override
+    public ${method.returnType} ${method.name}(${method.parameters}) {
+        throw new UnsupportedOperationException("${method.name}");
+    }
+    #end
     #foreach($method in $unrecognizedMethods)
 
     @Override
