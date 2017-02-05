@@ -1,7 +1,6 @@
 package com.skunkworks.fastorm.impl;
 
 import com.skunkworks.fastorm.annotations.Dao;
-import com.skunkworks.fastorm.annotations.GenerateRepository;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -19,15 +18,16 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.persistence.Column;
-import javax.persistence.Entity;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.io.Writer;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -87,6 +87,28 @@ public class DaoProcessor extends AbstractProcessor {
         TypeMirror daoMirror = (TypeMirror) daoValue.getValue();
         TypeElement daoValueElement = processingEnv.getElementUtils().getTypeElement(daoMirror.toString());
 
+        Set<String> additionalImports = new HashSet<>();
+
+        //Interface Methods
+        List<MethodData> queryMethods = new ArrayList<>();
+        List<MethodData> storedProcedureMethods = new ArrayList<>();
+        List<MethodData> unrecognizedMethods = new ArrayList<>();
+        for (Element enclosedElement : annotatedElement.getEnclosedElements()) {
+            if (ElementKind.METHOD.equals(enclosedElement.getKind())) {
+                MethodData methodData = processMethod(enclosedElement);
+                if (MethodType.QUERY.equals(methodData.getType())) {
+                    queryMethods.add(methodData);
+                } else if (MethodType.STORED_PROCEDURE.equals(methodData.getType())) {
+                    storedProcedureMethods.add(methodData);
+                } else {
+                    unrecognizedMethods.add(methodData);
+                }
+                queryMethods.add(processMethod(enclosedElement));
+            }
+            String name = enclosedElement.getSimpleName().toString();
+            warn("element name:" + name + ", kind:" + enclosedElement.getKind());
+        }
+
         String interfaceName = annotatedElement.getSimpleName().toString();
         String className = interfaceName + "Impl";
         JavaFileObject jfo = filer.createSourceFile(className);
@@ -123,6 +145,10 @@ public class DaoProcessor extends AbstractProcessor {
             }
         }
         context.put("fields", fields);
+        context.put("queryMethods", queryMethods);
+        context.put("storedProcedureMethods", storedProcedureMethods);
+        context.put("unrecognizedMethods", unrecognizedMethods);
+        context.put("additionalImports", additionalImports);
 
         String selectedColumns = fields.stream().
                 map(FieldData::getColumnName).
@@ -134,6 +160,26 @@ public class DaoProcessor extends AbstractProcessor {
         vt.merge(context, writer);
 
         writer.close();
+    }
+
+    private MethodData processMethod(Element methodElement) {
+        ExecutableElement method = (ExecutableElement) methodElement;
+        MethodData methodData = new MethodData();
+        methodData.setName(method.getSimpleName().toString());
+
+        //Return type
+        TypeElement returnElement = processingEnv.getElementUtils().getTypeElement(method.getReturnType().toString());
+        methodData.setReturnType(returnElement.getSimpleName().toString());
+
+        //method parameters
+        ArrayList<String> parameters = new ArrayList<>();
+        for (VariableElement param : method.getParameters()) {
+            TypeElement paramElement = processingEnv.getElementUtils().getTypeElement(param.asType().toString());
+            parameters.add(paramElement.getSimpleName().toString() + " " + param.getSimpleName());
+        }
+        warn(parameters.toString());
+        methodData.setParameters(String.join(", ", parameters));
+        return methodData;
     }
 
     private FieldData processField(Element field, String name, int fieldIndex) {

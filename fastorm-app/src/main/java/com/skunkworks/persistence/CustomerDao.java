@@ -7,4 +7,6 @@ import com.skunkworks.fastorm.annotations.Dao;
  */
 @Dao(Customer.class)
 public interface CustomerDao {
+
+    Customer findByFirstName(String firstName);
 }

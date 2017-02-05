@@ -12,6 +12,10 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
+#foreach($import in $additionalImports)
+import ${import};
+#end
+
 public class ${className} implements Dao<${entityName}, Long>, ${interfaceName} {
 
     private final DataSource dataSource;
@@ -32,8 +36,7 @@ public class ${className} implements Dao<${entityName}, Long>, ${interfaceName} 
 
     @Override
     public ${entityName} findOne(Long id) {
-        try {
-            Connection connection = dataSource.getConnection();
+        try(Connection connection = dataSource.getConnection()) {
             PreparedStatement preparedStatement = connection.prepareStatement("select ${selectColumns} from ${entityName}");
             preparedStatement.setLong(0, id);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -53,8 +56,7 @@ public class ${className} implements Dao<${entityName}, Long>, ${interfaceName} 
 
     @Override
     public List<${entityName}> findAll() {
-        try {
-            Connection connection = dataSource.getConnection();
+        try(Connection connection = dataSource.getConnection()) {
             CallableStatement callableStatement = connection.prepareCall("select ${selectColumns} from ${entityName}");
             ResultSet resultSet = callableStatement.executeQuery();
             List<${entityName}> items = new ArrayList<>();
@@ -94,8 +96,7 @@ public class ${className} implements Dao<${entityName}, Long>, ${interfaceName} 
 
     @Override
     public void deleteAll() {
-        try {
-            Connection connection = dataSource.getConnection();
+        try(Connection connection = dataSource.getConnection()) {
             CallableStatement callableStatement = connection.prepareCall("delete from ${entityName}");
             callableStatement.executeUpdate();
         } catch (SQLException e) {
@@ -111,4 +112,13 @@ public class ${className} implements Dao<${entityName}, Long>, ${interfaceName} 
         #end
         return item;
     }
+
+    #foreach($method in $unrecognizedMethods)
+
+    @Override
+    public ${method.returnType} ${method.name}(${method.parameters}) {
+        throw new UnsupportedOperationException("${method.name}");
+    }
+    #end
+
 }
