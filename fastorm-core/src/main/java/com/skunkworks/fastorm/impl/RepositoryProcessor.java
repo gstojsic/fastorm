@@ -16,6 +16,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
+import javax.persistence.Column;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.io.Writer;
@@ -26,8 +27,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import javax.persistence.Column;
 
 /**
  * stole on 21.01.17.

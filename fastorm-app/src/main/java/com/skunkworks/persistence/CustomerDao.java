@@ -14,5 +14,7 @@ public interface CustomerDao {
 
     List<Customer> findByLastName(String lastName);
 
+    List<Customer> findByLastNameOrderByLastName(String lastName);
+
     List<Customer> findByFirstNameAndLastName(String firstName, String lastName);
 }

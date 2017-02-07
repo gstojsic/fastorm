@@ -23,7 +23,6 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
@@ -32,7 +31,6 @@ import javax.persistence.Column;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
 import java.net.URL;
@@ -44,8 +42,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.StringJoiner;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -190,12 +186,12 @@ public class DaoProcessor extends AbstractProcessor {
 
         TypeElement returnTypeElement = (TypeElement) processingEnv.getTypeUtils().asElement(method.getReturnType());
         DeclaredType declaredReturnType = (DeclaredType) method.getReturnType();
-        //methodData.setReturnType(returnTypeElement.getSimpleName().toString());
         methodData.setReturnType(getTypeString(returnTypeElement, declaredReturnType));
 
         //method parameters
         ArrayList<String> parameters = new ArrayList<>();
         for (VariableElement param : method.getParameters()) {
+            //TODO: izvadit sve što treba od parametara metode za generirat sql parametre
             TypeElement paramElement = processingEnv.getElementUtils().getTypeElement(param.asType().toString());
             parameters.add(paramElement.getSimpleName().toString() + " " + param.getSimpleName());
         }
@@ -229,7 +225,12 @@ public class DaoProcessor extends AbstractProcessor {
                     whereSegmentList.add(operators.get(i - 1));
                     whereSegmentList.add(params.get(i) + " = ?");
                 }
-                methodData.setQuery(String.join(" ", whereSegmentList));
+                StringBuilder query = new StringBuilder();
+                query.append(String.join(" ", whereSegmentList));
+                if (ctx.getOrderByParam() != null) {
+                    query.append(" order by ").append(ctx.getOrderByParam());
+                }
+                methodData.setQuery(query.toString());
                 if (declaredReturnType.getTypeArguments().size() > 0) {
                     methodData.setType(MethodType.QUERY_LIST);
                 } else {
