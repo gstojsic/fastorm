@@ -110,13 +110,14 @@ public class ${className} implements Dao<${entityName}, Long>, ${interfaceName} 
         #foreach($field in $fields)
         item.${field.setter}(resultSet.get${field.recordsetType}(${field.index}));
         #end
+
         return item;
     }
 
     #foreach($method in $queryMethods)
 
     @Override
-    public ${method.returnType} ${method.name}(${method.parameters}) { //HEHE
+    public ${method.returnType} ${method.name}(${method.parameters}) {
         throw new UnsupportedOperationException("${method.name}");
     }
     #end
@@ -126,6 +127,11 @@ public class ${className} implements Dao<${entityName}, Long>, ${interfaceName} 
     public ${method.returnType} ${method.name}(${method.parameters}) {
         try(Connection connection = dataSource.getConnection()) {
             PreparedStatement preparedStatement = connection.prepareStatement("select ${selectColumns} from ${entityName} where ${method.query}");
+            #foreach($qParam in $method.queryParameters)
+
+            preparedStatement.set${qParam.queryParameterType}(${qParam.index}, ${qParam.methodParameterName});
+            #end
+
             ResultSet resultSet = preparedStatement.executeQuery();
             List<${entityName}> items = new ArrayList<>();
             while (resultSet.next()) {

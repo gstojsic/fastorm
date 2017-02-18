@@ -6,13 +6,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Generates Dao classes
+ * This annotation on a method on a @Dao interface will generate code to invoke a query.
  *
- * stole on 29.01.17.
+ * stole on 18.02.17.
  */
-@Target(ElementType.TYPE)
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.CLASS)
-public @interface Dao {
-
-    Class<?> value();
+public @interface Query {
 }

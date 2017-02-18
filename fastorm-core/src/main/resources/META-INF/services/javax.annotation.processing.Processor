@@ -1,2 +1,2 @@
-com.skunkworks.fastorm.impl.RepositoryProcessor
-com.skunkworks.fastorm.impl.DaoProcessor
+com.skunkworks.fastorm.processor.RepositoryProcessor
+com.skunkworks.fastorm.processor.DaoProcessor

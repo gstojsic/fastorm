@@ -6,13 +6,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Generates Dao classes
+ * TODO:implement
  *
- * stole on 29.01.17.
+ * This annotation used on a method on a @Dao interface will generate code to invoke a stored procedure.
+ *
+ * stole on 18.02.17.
  */
-@Target(ElementType.TYPE)
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.CLASS)
-public @interface Dao {
-
-    Class<?> value();
+public @interface StoredProcedure {
 }

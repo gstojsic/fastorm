@@ -1,4 +1,6 @@
-package com.skunkworks.fastorm.impl;
+package com.skunkworks.fastorm.processor.template;
+
+import java.util.List;
 
 /**
  * stole on 05.02.17.
@@ -9,6 +11,7 @@ public class MethodData {
     private String returnType = "void";
     private String parameters;
     private String query;
+    private List<QueryParameter> queryParameters;
 
     public MethodType getType() {
         return type;
@@ -48,5 +51,13 @@ public class MethodData {
 
     public void setQuery(String query) {
         this.query = query;
+    }
+
+    public List<QueryParameter> getQueryParameters() {
+        return queryParameters;
+    }
+
+    public void setQueryParameters(List<QueryParameter> queryParameters) {
+        this.queryParameters = queryParameters;
     }
 }

@@ -6,13 +6,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Generates Dao classes
+ * TODO:implement
  *
- * stole on 29.01.17.
+ * Generates Caches
+ *
+ * stole on 18.02.17.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.CLASS)
-public @interface Dao {
-
-    Class<?> value();
+public @interface Cache {
 }

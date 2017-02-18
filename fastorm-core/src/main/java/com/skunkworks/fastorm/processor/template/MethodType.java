@@ -1,4 +1,4 @@
-package com.skunkworks.fastorm.impl;
+package com.skunkworks.fastorm.processor.template;
 
 /**
  * stole on 05.02.17.

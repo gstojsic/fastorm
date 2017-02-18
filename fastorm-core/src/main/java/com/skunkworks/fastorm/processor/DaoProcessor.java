@@ -1,7 +1,11 @@
-package com.skunkworks.fastorm.impl;
+package com.skunkworks.fastorm.processor;
 
 import com.skunkworks.fastorm.annotations.Dao;
 import com.skunkworks.fastorm.parser.query.Query;
+import com.skunkworks.fastorm.processor.template.FieldData;
+import com.skunkworks.fastorm.processor.template.MethodData;
+import com.skunkworks.fastorm.processor.template.MethodType;
+import com.skunkworks.fastorm.processor.template.QueryParameter;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.apache.velocity.Template;
@@ -33,6 +37,7 @@ import javax.tools.JavaFileObject;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.Writer;
+import java.math.BigDecimal;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -190,13 +195,21 @@ public class DaoProcessor extends AbstractProcessor {
 
         //method parameters
         ArrayList<String> parameters = new ArrayList<>();
+        List<QueryParameter> queryParameters = new ArrayList<>();
+        int index = 0;
         for (VariableElement param : method.getParameters()) {
-            //TODO: izvadit sve što treba od parametara metode za generirat sql parametre
             TypeElement paramElement = processingEnv.getElementUtils().getTypeElement(param.asType().toString());
-            parameters.add(paramElement.getSimpleName().toString() + " " + param.getSimpleName());
+            String methodParameterName = param.getSimpleName().toString();
+            parameters.add(paramElement.getSimpleName().toString() + " " + methodParameterName);
+
+            //warn("Parameter:" + paramElement.getSimpleName().toString() + ", " + paramElement.asType().toString());
+            //Tip
+            String queryParameterType = getRecordsetType(param);
+            queryParameters.add(new QueryParameter(++index, methodParameterName, queryParameterType));
         }
         //warn(parameters.toString());
         methodData.setParameters(String.join(", ", parameters));
+        methodData.setQueryParameters(queryParameters);
 
         //query method
         processQueryMethod(methodData, declaredReturnType);
@@ -238,6 +251,7 @@ public class DaoProcessor extends AbstractProcessor {
                 }
 
                 //TODO - fix prepared statement parameters and orderBy
+//                methodData.setQueryParameters(queryParameters);
             } else {
                 warn("Method " + methodData.getName() + " has not been succesfully parsed.");
             }
@@ -290,14 +304,26 @@ public class DaoProcessor extends AbstractProcessor {
         return columnAnnotationName;
     }
 
-    private String getRecordsetType(Element field) {
-        if ("java.lang.Long".equals(field.asType().toString())) {
+    private String getRecordsetType(Element element) {
+        if (Long.class.getCanonicalName().equals(element.asType().toString())) {
             return "Long";
-        } else if ("java.lang.String".equals(field.asType().toString())) {
+        } else if (Integer.class.getCanonicalName().equals(element.asType().toString())) {
+            return "Integer";
+        } else if (String.class.getCanonicalName().equals(element.asType().toString())) {
             return "String";
+        } else if (Boolean.class.getCanonicalName().equals(element.asType().toString())) {
+            return "Boolean";
+        } else if (Byte.class.getCanonicalName().equals(element.asType().toString())) {
+            return "Byte";
+        } else if (Float.class.getCanonicalName().equals(element.asType().toString())) {
+            return "Float";
+        } else if (Double.class.getCanonicalName().equals(element.asType().toString())) {
+            return "Double";
+        } else if (BigDecimal.class.getCanonicalName().equals(element.asType().toString())) {
+            return "BigDecimal";
         }
 
-        error("Unrecognized type:" + field.asType());
+        error("Unrecognized type:" + element.asType());
         return null;
     }
 
