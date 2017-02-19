@@ -1,7 +1,7 @@
 package com.skunkworks.fastorm.processor;
 
-import com.skunkworks.fastorm.annotations.Dao;
-import com.skunkworks.fastorm.processor.dao.DaoGenerator;
+import com.skunkworks.fastorm.annotations.Cache;
+import com.skunkworks.fastorm.processor.cache.CacheGenerator;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -17,9 +17,9 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
- * stole on 29.01.17.
+ * stole on 19.02.17.
  */
-public class DaoProcessor extends AbstractProcessor {
+public class CacheProcessor extends AbstractProcessor {
     private Messager messager;
     private Filer filer;
 
@@ -33,15 +33,15 @@ public class DaoProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnvironment) {
 
-        for (Element annotatedElement : roundEnvironment.getElementsAnnotatedWith(Dao.class)) {
+        for (Element annotatedElement : roundEnvironment.getElementsAnnotatedWith(Cache.class)) {
             // Check if a class has been annotated with @Dao
             if (annotatedElement.getKind() != ElementKind.INTERFACE) {
-                error(annotatedElement, "Only interfaces can be annotated with @%s", Dao.class.getSimpleName());
+                error(annotatedElement, "Only interfaces can be annotated with @%s", Cache.class.getSimpleName());
                 return true; // Exit processing
             }
 
             try {
-                new DaoGenerator(processingEnv).generateDao(annotatedElement);
+                new CacheGenerator(processingEnv).generateCache(annotatedElement);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -52,7 +52,7 @@ public class DaoProcessor extends AbstractProcessor {
     @Override
     public Set<String> getSupportedAnnotationTypes() {
         Set<String> annotations = new LinkedHashSet<>();
-        annotations.add(Dao.class.getCanonicalName());
+        annotations.add(Cache.class.getCanonicalName());
         return annotations;
     }
 

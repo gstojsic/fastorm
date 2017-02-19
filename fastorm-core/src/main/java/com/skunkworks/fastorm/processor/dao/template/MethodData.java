@@ -1,4 +1,4 @@
-package com.skunkworks.fastorm.processor.template;
+package com.skunkworks.fastorm.processor.dao.template;
 
 import java.util.List;
 

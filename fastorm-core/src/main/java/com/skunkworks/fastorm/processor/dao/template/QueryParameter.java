@@ -1,4 +1,4 @@
-package com.skunkworks.fastorm.processor.template;
+package com.skunkworks.fastorm.processor.dao.template;
 
 /**
  * stole on 18.02.17.

@@ -1,7 +1,7 @@
 package com.skunkworks.fastorm.processor;
 
 import com.skunkworks.fastorm.annotations.GenerateRepository;
-import com.skunkworks.fastorm.processor.template.FieldData;
+import com.skunkworks.fastorm.processor.dao.template.FieldData;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
