@@ -73,6 +73,11 @@ public class DaoGenerator {
             }
         }
 
+        if (daoValue == null) {
+            //no value, nothing to do.
+            return;
+        }
+
         TypeMirror daoMirror = (TypeMirror) daoValue.getValue();
         TypeElement daoValueElement = processingEnv.getElementUtils().getTypeElement(daoMirror.toString());
 
@@ -118,6 +123,8 @@ public class DaoGenerator {
 
         Properties props = new Properties();
         URL url = this.getClass().getClassLoader().getResource("velocity.properties");
+        if (url == null)
+            throw new RuntimeException("No properties");
         props.load(url.openStream());
 
         VelocityEngine ve = new VelocityEngine(props);
@@ -203,6 +210,12 @@ public class DaoGenerator {
             final QueryParser parser = new QueryParser(tokens);
             // Begin parsing at rule query
             final QueryParser.QueryContext queryContext = parser.query();
+
+//            ParseTree tree = parser.query();
+//            ParseTreeWalker walker = new ParseTreeWalker();
+//            walker.walk( new HelloWalker(), tree );
+//
+//            QueryBaseListener
             if (parser.getNumberOfSyntaxErrors() == 0) {
                 Query ctx = queryContext.ctx;
                 ArrayList<String> whereSegmentList = new ArrayList<>();
