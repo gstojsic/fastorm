@@ -31,4 +31,13 @@ public class MethodData {
     public void setParameters(String parameters) {
         this.parameters = parameters;
     }
+
+    @Override
+    public String toString() {
+        return "MethodData{" +
+                "name='" + name + '\'' +
+                ", returnType='" + returnType + '\'' +
+                ", parameters='" + parameters + '\'' +
+                '}';
+    }
 }

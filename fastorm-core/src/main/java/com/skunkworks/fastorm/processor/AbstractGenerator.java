@@ -9,6 +9,7 @@ import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
 import javax.tools.JavaFileObject;
 import java.io.Writer;
 import java.util.Map;
@@ -58,6 +59,14 @@ public class AbstractGenerator {
         } else {
             return returnTypeElement.getSimpleName().toString();
         }
+    }
+
+    protected TypeElement getTypeElement(TypeMirror t) {
+        return (TypeElement) processingEnv.getTypeUtils().asElement(t);
+    }
+
+    protected TypeElement getTypeElement(CharSequence name) {
+        return processingEnv.getElementUtils().getTypeElement(name);
     }
 
     protected void warn(String message) {

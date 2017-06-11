@@ -4,7 +4,6 @@ import com.skunkworks.fastorm.annotations.Cache;
 import com.skunkworks.fastorm.processor.AbstractGenerator;
 import com.skunkworks.fastorm.processor.cache.template.FieldData;
 import com.skunkworks.fastorm.processor.cache.template.MethodData;
-import com.skunkworks.fastorm.processor.tool.Tools;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
@@ -16,18 +15,22 @@ import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.persistence.Id;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * stole on 19.02.17.
  */
 public class CacheGenerator extends AbstractGenerator {
+    private Set<String> additionalImports = new HashSet<>();
 
     public CacheGenerator(ProcessingEnvironment processingEnv) {
         super(processingEnv);
@@ -52,24 +55,18 @@ public class CacheGenerator extends AbstractGenerator {
         }
 
         TypeMirror cacheMirror = (TypeMirror) cacheValue.getValue();
-        TypeElement cacheValueElement = processingEnv.getElementUtils().getTypeElement(cacheMirror.toString());
+        TypeElement cacheValueElement = getTypeElement(cacheMirror.toString());
 
-        List<FieldData> fields = new ArrayList<>();
-        int fieldIndex = 1;
-        for (Element enclosedElement : cacheValueElement.getEnclosedElements()) {
-            String name = enclosedElement.getSimpleName().toString();
-            if (enclosedElement.getKind().isField() && !"DEFAULT_VALUE".equals(name)) {
-
-                fields.add(processField(enclosedElement, name, fieldIndex));
-                fieldIndex++;
-            }
-        }
+        List<FieldData> fields = cacheValueElement.getEnclosedElements().stream().
+                filter(element -> element.getKind().isField()).
+                filter(element -> !"DEFAULT_VALUE".equals(element.getSimpleName().toString())).
+                map(element -> processField(element, element.getSimpleName().toString())).
+                collect(Collectors.toList());
 
         //Process Methods of the interface
         //Interface Methods
         List<MethodData> queryMethods = new ArrayList<>();
         List<MethodData> queryListMethods = new ArrayList<>();
-        List<MethodData> storedProcedureMethods = new ArrayList<>();
         List<MethodData> unrecognizedMethods = new ArrayList<>();
 
         annotatedElement.getEnclosedElements().forEach(enclosedElement -> {
@@ -79,16 +76,12 @@ public class CacheGenerator extends AbstractGenerator {
 //                    queryMethods.add(methodData);
 //                } else if (MethodType.QUERY_LIST.equals(methodData.getType())) {
 //                    queryListMethods.add(methodData);
-//                } else if (MethodType.STORED_PROCEDURE.equals(methodData.getType())) {
-//                    storedProcedureMethods.add(methodData);
 //                } else {
-                    unrecognizedMethods.add(methodData);
+                unrecognizedMethods.add(methodData);
 //                }
             }
         });
 
-
-        Set<String> additionalImports = new HashSet<>();
 
         String interfaceName = annotatedElement.getSimpleName().toString();
         String className = interfaceName + "Impl";
@@ -98,6 +91,18 @@ public class CacheGenerator extends AbstractGenerator {
         context.put("packageName", packageElement.getQualifiedName().toString());
         context.put("interfaceName", interfaceName);
         context.put("className", className);
+        String entityName = cacheValueElement.getSimpleName().toString();
+        context.put("entityName", entityName);
+        FieldData idField = fields.stream().
+                filter(FieldData::isId).
+                findFirst().orElseGet(() -> fields.stream().
+                filter(field -> "id".equals(field.getName().toLowerCase())).
+                findFirst().orElse(null));
+        if (idField == null)
+            throw new RuntimeException("Id field not found");
+        context.put("idField", idField);
+
+
         context.put("fields", fields);
         context.put("additionalImports", additionalImports);
         context.put("unrecognizedMethods", unrecognizedMethods);
@@ -105,17 +110,26 @@ public class CacheGenerator extends AbstractGenerator {
         write(className, "cache/Cache.ftl", context);
     }
 
-    private FieldData processField(Element field, String name, int fieldIndex) {
+    private FieldData processField(Element field, String name) {
         //warn("element type:" + field.asType());
         //warn("element kind:" + field.asType().getKind());
 
-//        String columnName = getColumnName(field, name);
-//        String getterPrefix = field.asType().getKind().equals(TypeKind.BOOLEAN) ? "is" : "get";
-//        String capitalizedName = name.substring(0, 1).toUpperCase() + name.substring(1);
-//        String getter = getterPrefix + capitalizedName;
-//        String setter = "set" + capitalizedName;
-//        String recordsetType = Tools.getRecordsetType(field, messager);
-        return new FieldData();
+        Id idAnnotation = field.getAnnotation(Id.class);
+        boolean isId = idAnnotation != null;
+        String getterPrefix = field.asType().getKind().equals(TypeKind.BOOLEAN) ? "is" : "get";
+        String capitalizedName = name.substring(0, 1).toUpperCase() + name.substring(1);
+        String getter = getterPrefix + capitalizedName;
+        String setter = "set" + capitalizedName;
+        String canonicalType = field.asType().toString();
+        //warn("canonicalType:" + canonicalType);
+
+        TypeElement fieldType = getTypeElement(canonicalType);
+        //warn("type:" + fieldType.getSimpleName().toString());
+
+        if (!field.asType().toString().startsWith("java.lang")) {
+            additionalImports.add(field.asType().toString());
+        }
+        return new FieldData(name, fieldType.getSimpleName().toString(), getter, setter, isId);
     }
 
     private MethodData processMethod(Element methodElement) {
@@ -124,10 +138,10 @@ public class CacheGenerator extends AbstractGenerator {
         methodData.setName(method.getSimpleName().toString());
 
         //Return type
-        warn(method.getReturnType().toString());
-        warn(method.getReturnType().getKind().toString());
+        warn("cache:" + method.getReturnType().toString());
+        warn("cache:" + method.getReturnType().getKind().toString());
 
-        TypeElement returnTypeElement = (TypeElement) processingEnv.getTypeUtils().asElement(method.getReturnType());
+        TypeElement returnTypeElement = getTypeElement(method.getReturnType());
         DeclaredType declaredReturnType = (DeclaredType) method.getReturnType();
         methodData.setReturnType(getTypeString(returnTypeElement, declaredReturnType));
 
@@ -136,7 +150,7 @@ public class CacheGenerator extends AbstractGenerator {
         //List<QueryParameter> queryParameters = new ArrayList<>();
         //int index = 0;
         for (VariableElement param : method.getParameters()) {
-            TypeElement paramElement = processingEnv.getElementUtils().getTypeElement(param.asType().toString());
+            TypeElement paramElement = getTypeElement(param.asType().toString());
             String methodParameterName = param.getSimpleName().toString();
             parameters.add(paramElement.getSimpleName().toString() + " " + methodParameterName);
 
@@ -151,6 +165,7 @@ public class CacheGenerator extends AbstractGenerator {
 
         //query method
         //processQueryMethod(methodData, declaredReturnType);
+        warn("cache:" + methodData.toString());
         return methodData;
     }
 }

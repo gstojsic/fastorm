@@ -1,6 +1,7 @@
 package com.skunkworks.fastorm.parser;
 
-import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
@@ -42,7 +43,7 @@ public class ParserTest {
 //        String sql = "findByNameAndLastName";
         final InputStream is = new ByteArrayInputStream(sql.getBytes(Charset.forName("UTF-8")));
 
-        final ANTLRInputStream inputStream = new ANTLRInputStream(is);
+        final CharStream inputStream = CharStreams.fromStream(is);
         // Create an ExprLexer that feeds from that stream
         final QueryLexer lexer = new QueryLexer(inputStream);
         // Create a stream of tokens fed by the lexer
@@ -69,8 +70,13 @@ public class ParserTest {
         }
 
         @Override
+        public void enterQuery(QueryParser.QueryContext ctx) {
+            l.info("enterQuery:" + ctx.getText());
+        }
+
+        @Override
         public void exitQuery(QueryParser.QueryContext ctx) {
-            l.info(ctx.getText());
+            l.info("exitQuery:" + ctx.getText());
         }
     }
 }

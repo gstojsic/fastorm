@@ -7,7 +7,8 @@ import com.skunkworks.fastorm.processor.dao.template.MethodData;
 import com.skunkworks.fastorm.processor.dao.template.MethodType;
 import com.skunkworks.fastorm.processor.dao.template.QueryParameter;
 import com.skunkworks.fastorm.processor.tool.Tools;
-import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -201,7 +202,7 @@ public class DaoGenerator {
     private void processQueryMethod(MethodData methodData, DeclaredType declaredReturnType) {
         final InputStream is = new ByteArrayInputStream(methodData.getName().getBytes(Charset.forName("UTF-8")));
         try {
-            final ANTLRInputStream inputStream = new ANTLRInputStream(is);
+            final CharStream inputStream = CharStreams.fromStream(is);
             // Create an ExprLexer that feeds from that stream
             final QueryLexer lexer = new QueryLexer(inputStream);
             // Create a stream of tokens fed by the lexer

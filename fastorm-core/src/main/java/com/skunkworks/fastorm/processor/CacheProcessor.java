@@ -34,7 +34,7 @@ public class CacheProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnvironment) {
 
         for (Element annotatedElement : roundEnvironment.getElementsAnnotatedWith(Cache.class)) {
-            // Check if a class has been annotated with @Dao
+            // Check if a class has been annotated with @Cache
             if (annotatedElement.getKind() != ElementKind.INTERFACE) {
                 error(annotatedElement, "Only interfaces can be annotated with @%s", Cache.class.getSimpleName());
                 return true; // Exit processing
