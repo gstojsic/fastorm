@@ -1,9 +1,18 @@
 package com.skunkworks.fastorm.processor.cache;
 
 import com.skunkworks.fastorm.annotations.Cache;
+import com.skunkworks.fastorm.parser.query.Query;
 import com.skunkworks.fastorm.processor.AbstractGenerator;
 import com.skunkworks.fastorm.processor.cache.template.FieldData;
 import com.skunkworks.fastorm.processor.cache.template.MethodData;
+import com.skunkworks.fastorm.processor.cache.template.MethodType;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.skunkworks.fastorm.parser.CacheQueryLexer;
+import org.skunkworks.fastorm.parser.CacheQueryParser;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
@@ -18,6 +27,9 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.persistence.Id;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -164,8 +176,58 @@ public class CacheGenerator extends AbstractGenerator {
         //methodData.setQueryParameters(queryParameters);
 
         //query method
-        //processQueryMethod(methodData, declaredReturnType);
+        processQueryMethod(methodData, declaredReturnType);
         warn("cache:" + methodData.toString());
         return methodData;
     }
+
+    private void processQueryMethod(MethodData methodData, DeclaredType declaredReturnType) {
+        final InputStream is = new ByteArrayInputStream(methodData.getName().getBytes(Charset.forName("UTF-8")));
+        try {
+            final CharStream inputStream = CharStreams.fromStream(is);
+            final CacheQueryLexer lexer = new CacheQueryLexer(inputStream);
+            final CommonTokenStream tokens = new CommonTokenStream(lexer);
+            final CacheQueryParser parser = new CacheQueryParser(tokens);
+
+            ParseTree tree = parser.query();
+            ParseTreeWalker walker = new ParseTreeWalker();
+            CacheQueryListener listener = new CacheQueryListener();
+            walker.walk(listener, tree);
+
+            warn("Syntax Errors:" + parser.getNumberOfSyntaxErrors());
+
+            if (parser.getNumberOfSyntaxErrors() == 0) {
+
+//                Query ctx = queryContext.ctx;
+//                ArrayList<String> whereSegmentList = new ArrayList<>();
+//                List<String> params = ctx.getQueryParams();
+//                List<String> operators = ctx.getQueryOperators();
+//                whereSegmentList.add(params.get(0) + " = ?");
+//                for (int i = 1; i < params.size(); i++) {
+//                    whereSegmentList.add(operators.get(i - 1));
+//                    whereSegmentList.add(params.get(i) + " = ?");
+//                }
+//                StringBuilder query = new StringBuilder();
+//                query.append(String.join(" ", whereSegmentList));
+//                if (ctx.getOrderByParam() != null) {
+//                    query.append(" order by ").append(ctx.getOrderByParam());
+//                }
+//                methodData.setQuery(query.toString());
+//
+//                if (declaredReturnType.getTypeArguments().size() > 0) {
+//                    methodData.setType(MethodType.QUERY_LIST);
+//                } else {
+//                    methodData.setType(MethodType.QUERY_SINGLE);
+//                }
+
+                //TODO - fix prepared statement parameters and orderBy
+//                methodData.setQueryParameters(queryParameters);
+            } else {
+                warn("Method " + methodData.getName() + " has not been succesfully parsed.");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }

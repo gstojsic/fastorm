@@ -1,11 +1,15 @@
 package com.skunkworks.fastorm.parser;
 
+import com.skunkworks.fastorm.processor.cache.CacheQueryListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.junit.Test;
+import org.skunkworks.fastorm.parser.CacheQueryBaseListener;
+import org.skunkworks.fastorm.parser.CacheQueryLexer;
+import org.skunkworks.fastorm.parser.CacheQueryParser;
 import org.skunkworks.fastorm.parser.QueryBaseListener;
 import org.skunkworks.fastorm.parser.QueryLexer;
 import org.skunkworks.fastorm.parser.QueryParser;
@@ -78,5 +82,30 @@ public class ParserTest {
         public void exitQuery(QueryParser.QueryContext ctx) {
             l.info("exitQuery:" + ctx.getText());
         }
+    }
+
+    @Test
+    public void parseCache() throws Exception {
+        String cacheQuery = "findByNameLastNameAndLastName1AndLastName2";
+        final InputStream is = new ByteArrayInputStream(cacheQuery.getBytes(Charset.forName("UTF-8")));
+
+        final CharStream inputStream = CharStreams.fromStream(is);
+        // Create an ExprLexer that feeds from that stream
+        final CacheQueryLexer lexer = new CacheQueryLexer(inputStream);
+        // Create a stream of tokens fed by the lexer
+        final CommonTokenStream tokens = new CommonTokenStream(lexer);
+        // Create a parser that feeds off the token stream
+        final CacheQueryParser parser = new CacheQueryParser(tokens);
+        // Begin parsing at rule query
+//        final QueryParser.QueryContext queryContext = parser.query();
+//        Query ctx = queryContext.ctx;
+
+        ParseTree tree = parser.query();
+        ParseTreeWalker walker = new ParseTreeWalker();
+        CacheQueryListener listener = new CacheQueryListener();
+        walker.walk(listener, tree);
+
+        l.info("Syntax Errors:" + parser.getNumberOfSyntaxErrors());
+//        l.info("Done:" + queryContext.getText());
     }
 }

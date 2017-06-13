@@ -12,7 +12,7 @@ finalExpression : finalOperator variable;
 
 finalOperator : ORDER_BY;
 
-number : DIGIT +;
+number : DIGIT+;
 
 variable : LETTER (LETTER | DIGIT)*;
 
