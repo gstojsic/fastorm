@@ -1,11 +1,9 @@
 package com.skunkworks.fastorm.processor.cache;
 
 import com.skunkworks.fastorm.annotations.Cache;
-import com.skunkworks.fastorm.parser.query.Query;
 import com.skunkworks.fastorm.processor.AbstractGenerator;
 import com.skunkworks.fastorm.processor.cache.template.FieldData;
 import com.skunkworks.fastorm.processor.cache.template.MethodData;
-import com.skunkworks.fastorm.processor.cache.template.MethodType;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -150,8 +148,8 @@ public class CacheGenerator extends AbstractGenerator {
         methodData.setName(method.getSimpleName().toString());
 
         //Return type
-        warn("cache:" + method.getReturnType().toString());
-        warn("cache:" + method.getReturnType().getKind().toString());
+//        warn("cache:" + method.getReturnType().toString());
+//        warn("cache:" + method.getReturnType().getKind().toString());
 
         TypeElement returnTypeElement = getTypeElement(method.getReturnType());
         DeclaredType declaredReturnType = (DeclaredType) method.getReturnType();
@@ -177,7 +175,7 @@ public class CacheGenerator extends AbstractGenerator {
 
         //query method
         processQueryMethod(methodData, declaredReturnType);
-        warn("cache:" + methodData.toString());
+//        warn("cache:" + methodData.toString());
         return methodData;
     }
 
@@ -194,9 +192,15 @@ public class CacheGenerator extends AbstractGenerator {
             CacheQueryListener listener = new CacheQueryListener();
             walker.walk(listener, tree);
 
-            warn("Syntax Errors:" + parser.getNumberOfSyntaxErrors());
-
             if (parser.getNumberOfSyntaxErrors() == 0) {
+
+                List<String> keyComponents = listener.getKeyComponents();
+                if (keyComponents.size() == 1) {
+                    //process Simple key
+
+                } else {
+                    //process Complex key
+                }
 
 //                Query ctx = queryContext.ctx;
 //                ArrayList<String> whereSegmentList = new ArrayList<>();
@@ -223,7 +227,7 @@ public class CacheGenerator extends AbstractGenerator {
                 //TODO - fix prepared statement parameters and orderBy
 //                methodData.setQueryParameters(queryParameters);
             } else {
-                warn("Method " + methodData.getName() + " has not been succesfully parsed.");
+                warn("Method " + methodData.getName() + " has not been succesfully parsed. Errors:" + parser.getNumberOfSyntaxErrors());
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

@@ -11,18 +11,7 @@ import java.util.List;
  * stole on 11.06.17.
  */
 public class CacheQueryListener extends CacheQueryBaseListener {
-
     private final List<String> keyComponents = new ArrayList<>();
-
-    @Override
-    public void enterQuery(CacheQueryParser.QueryContext ctx) {
-        //l.info("enterQuery:" + ctx.getText());
-    }
-
-    @Override
-    public void exitQuery(CacheQueryParser.QueryContext ctx) {
-        //l.info("exitQuery:" + ctx.getText());
-    }
 
     @Override
     public void exitAtom(CacheQueryParser.AtomContext ctx) {
