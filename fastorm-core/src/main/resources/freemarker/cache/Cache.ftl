@@ -32,7 +32,7 @@ public class ${className} implements ${interfaceName} {
             ${command.indexName}Index.computeIfAbsent(entity.${command.entityGetter}(), s -> new ArrayList<>()).add(entity);
             </#list>
             <#list indexComplexFillCommands as command>
-            ${command.indexName}Index.put(new ${command.keyClass}(), entity);
+            ${command.indexName}Index.put(new ${command.keyClass}(${command.constructorParams}), entity);
             </#list>
         }
     }
@@ -59,7 +59,7 @@ public class ${className} implements ${interfaceName} {
 
     @Override
     public ${method.returnType} ${method.name}(${method.parameters}) {
-        return ${method.keyName}Index.get(new ${method.keyClass}());
+        return ${method.keyName}Index.get(new ${method.keyClass}(${method.constructorParams}));
     }
     </#list>
     <#list unrecognizedMethods as method>
@@ -72,7 +72,14 @@ public class ${className} implements ${interfaceName} {
     <#list complexKeyClasses as keyClass>
 
     private static final class ${keyClass.className} {
-        ${keyClass.className}() {
+        <#list keyClass.fields as field>
+        //
+        </#list>
+
+        ${keyClass.className}(${keyClass.constructorParams}) {
+            <#list keyClass.constructorInitializers as initializer>
+            //
+            </#list>
         }
     }
     </#list>

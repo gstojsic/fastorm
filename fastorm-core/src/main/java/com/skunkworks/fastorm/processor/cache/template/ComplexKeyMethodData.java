@@ -9,13 +9,22 @@ public class ComplexKeyMethodData {
     private final String parameters;
     private final String keyName;
     private final String keyClass;
+    private final String constructorParams;
 
-    public ComplexKeyMethodData(String name, String returnType, String parameters, String keyName, String keyClass) {
+    public ComplexKeyMethodData(
+            String name,
+            String returnType,
+            String parameters,
+            String keyName,
+            String keyClass,
+            String constructorParams
+    ) {
         this.name = name;
         this.returnType = returnType;
         this.parameters = parameters;
         this.keyName = keyName;
         this.keyClass = keyClass;
+        this.constructorParams = constructorParams;
     }
 
     public String getName() {
@@ -36,5 +45,9 @@ public class ComplexKeyMethodData {
 
     public String getKeyClass() {
         return keyClass;
+    }
+
+    public String getConstructorParams() {
+        return constructorParams;
     }
 }

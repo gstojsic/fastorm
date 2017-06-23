@@ -37,12 +37,15 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
 /**
  * stole on 19.02.17.
@@ -79,7 +82,7 @@ public class CacheGenerator extends AbstractGenerator {
                 filter(element -> element.getKind().isField()).
                 filter(element -> !"DEFAULT_VALUE".equals(element.getSimpleName().toString())).
                 map(element -> processField(element, element.getSimpleName().toString())).
-                collect(Collectors.toList());
+                collect(toList());
 
         //Process Methods of the interface
         //Interface Methods
@@ -131,7 +134,20 @@ public class CacheGenerator extends AbstractGenerator {
                     indexes.add(index);
 
                     complexKeyQueryMethods.add(prepareComplexKeyMethodData(methodAnalysisData, indexName, keyClassName));
-                    ComplexIndexFillCommand complexIndexFillCommand = new ComplexIndexFillCommand(indexName, keyClassName);
+
+                    //compute required fields
+                    List<FieldData> componentFields = keyComponents.stream().
+                            map(Tools::lowercaseFirstLetter).
+                            map(keyComponent -> fields.stream().
+                                    filter(fieldData -> keyComponent.equals(fieldData.getName())).
+                                    findFirst().
+                                    orElseThrow(() -> new RuntimeException("Field not found:" + keyComponent))).
+                            collect(toList());
+
+                    String constructorParams = componentFields.stream().
+                            map(field -> "entity." + field.getGetter() + "()").
+                            collect(joining(", "));
+                    ComplexIndexFillCommand complexIndexFillCommand = new ComplexIndexFillCommand(indexName, keyClassName, constructorParams);
 
                     if (MethodType.QUERY_SINGLE.equals(methodAnalysisData.getType())) {
                         indexComplexFillCommands.add(complexIndexFillCommand);
@@ -141,8 +157,11 @@ public class CacheGenerator extends AbstractGenerator {
                     } else {
                         throw new RuntimeException("Unknown method type:" + methodAnalysisData.getType());
                     }
+                    String keyConstructorParams = componentFields.stream().
+                            map(field -> field.getType() + " " + field.getName()).
+                            collect(joining(", "));
                     //Setup complex key class
-                    complexKeyClasses.add(new ComplexKeyClass(keyClassName));
+                    complexKeyClasses.add(new ComplexKeyClass(keyClassName, keyConstructorParams, Collections.emptyList(), Collections.emptyList()));
                 } else {
                     // Simple Key
                     //check against fields.
@@ -221,14 +240,18 @@ public class CacheGenerator extends AbstractGenerator {
         );
     }
 
-    private ComplexKeyMethodData prepareComplexKeyMethodData(MethodAnalysisData methodAnalysisData, String keyName, String keyClass) {
+    private ComplexKeyMethodData prepareComplexKeyMethodData(
+            MethodAnalysisData methodAnalysisData,
+            String keyName,
+            String keyClass
+    ) {
         return new ComplexKeyMethodData(
                 methodAnalysisData.getName(),
                 methodAnalysisData.getReturnType(),
                 String.join(", ", methodAnalysisData.getParameters()),
                 keyName,
-                keyClass
-        );
+                keyClass,
+                String.join(", ", methodAnalysisData.getParameterNames()));
     }
 
     private FieldData processField(Element field, String name) {
