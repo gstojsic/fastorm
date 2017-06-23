@@ -169,8 +169,8 @@ public class DaoGenerator {
         methodData.setName(method.getSimpleName().toString());
 
         //Return type
-        warn(method.getReturnType().toString());
-        warn(method.getReturnType().getKind().toString());
+        //warn(method.getReturnType().toString());
+        //warn(method.getReturnType().getKind().toString());
 
         TypeElement returnTypeElement = (TypeElement) processingEnv.getTypeUtils().asElement(method.getReturnType());
         DeclaredType declaredReturnType = (DeclaredType) method.getReturnType();

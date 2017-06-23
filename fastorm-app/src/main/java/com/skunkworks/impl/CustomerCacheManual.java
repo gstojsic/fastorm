@@ -4,7 +4,10 @@ import com.skunkworks.fastorm.Dao;
 import com.skunkworks.persistence.Customer;
 import com.skunkworks.persistence.CustomerCache;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * stole on 14.06.17.
@@ -12,7 +15,8 @@ import java.util.List;
 public class CustomerCacheManual implements CustomerCache {
 
     private final Dao<Customer, Long> dao;
-    //private Map<Long, Customer> entitiesById = new HashMap<>();
+    private final Map<String, Customer> entitiesByFirstName = new HashMap<>();
+    private final Map<String, List<Customer>> entitiesByLastName = new HashMap<>();
 
     public CustomerCacheManual(Dao<Customer, Long> dao) {
         this.dao = dao;
@@ -22,17 +26,19 @@ public class CustomerCacheManual implements CustomerCache {
     private void loadData() {
         List<Customer> entities = dao.findAll();
         for (Customer entity : entities) {
+            entitiesByFirstName.put(entity.getFirstName(), entity);
+            entitiesByLastName.computeIfAbsent(entity.getLastName(), s -> new ArrayList<>()).add(entity);
         }
     }
 
     @Override
     public Customer findByFirstName(String firstName) {
-        throw new UnsupportedOperationException("findByFirstName");
+        return entitiesByFirstName.get(firstName);
     }
 
     @Override
     public List<Customer> findByLastName(String lastName) {
-        throw new UnsupportedOperationException("findByLastName");
+        return entitiesByLastName.get(lastName);
     }
 }
 

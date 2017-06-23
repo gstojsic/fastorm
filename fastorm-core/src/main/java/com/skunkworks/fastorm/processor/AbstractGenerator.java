@@ -31,7 +31,7 @@ public class AbstractGenerator {
 
     protected void write(String filename, String templatePath, Map<String, Object> context) throws Exception {
         JavaFileObject jfo = filer.createSourceFile(filename);
-        warn("AbstractGenerator::write");
+        //warn("AbstractGenerator::write");
         try (Writer writer = jfo.openWriter()) {
             Configuration cfg = new Configuration(Configuration.VERSION_2_3_26);
             cfg.setClassForTemplateLoading(getClass(), "/freemarker");
@@ -48,9 +48,8 @@ public class AbstractGenerator {
         if (declaredReturnType.getTypeArguments().size() > 0) {
             String typeParameters = declaredReturnType.getTypeArguments().stream().
                     map(typeMirror -> {
-                        TypeElement paramElement = processingEnv.getElementUtils().getTypeElement(typeMirror.toString());
+                        TypeElement paramElement = getTypeElement(typeMirror.toString());
                         return paramElement.getSimpleName().toString();
-                        //return typeMirror.toString();
                     }).
                     collect(Collectors.joining(", "));
 

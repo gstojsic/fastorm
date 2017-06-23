@@ -6,6 +6,5 @@ package com.skunkworks.fastorm.processor.cache.template;
 public enum MethodType {
     QUERY_LIST,
     QUERY_SINGLE,
-    STORED_PROCEDURE,
     UNRECOGNIZED
 }

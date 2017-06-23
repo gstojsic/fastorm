@@ -41,4 +41,12 @@ public enum Tools {
     public static void error(Messager messager, String message) {
         messager.printMessage(Diagnostic.Kind.ERROR, message);
     }
+
+    public static String capitalizeFirstLetter(String item) {
+        return item.substring(0, 1).toUpperCase() + item.substring(1);
+    }
+
+    public static String lowercaseFirstLetter(String item) {
+        return item.substring(0, 1).toLowerCase() + item.substring(1);
+    }
 }

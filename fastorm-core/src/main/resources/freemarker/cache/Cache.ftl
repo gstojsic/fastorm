@@ -11,8 +11,11 @@ ${import};
 
 public class ${className} implements ${interfaceName} {
 
-    private final Dao<${entityName}, ${idField.type}> dao;
-    //private Map<${idField.type}, ${entityName}> entitiesById = new HashMap<>();
+    protected final Dao<${entityName}, ${idField.type}> dao;
+
+    <#list uniqueIndexes as index>
+    protected final Map<${index.keyType}, ${index.valueType}> ${index.name}Index = new HashMap<>();
+    </#list>
 
     public ${className}(Dao<${entityName}, ${idField.type}> dao) {
         this.dao = dao;
@@ -22,8 +25,25 @@ public class ${className} implements ${interfaceName} {
     private void loadData() {
         List<${entityName}> entities = dao.findAll();
         for (${entityName} entity : entities) {
+        <#list indexFillCommands as command>
+        //firstNameIndex.put(entity.getFirstName(), entity);
+        </#list>
         }
     }
+    <#list queryMethods as method>
+
+    @Override
+    public ${method.returnType} ${method.name}(${method.parameters}) {
+        return ${method.keyName}Index.get(${method.keyParameter});
+    }
+    </#list>
+    <#list queryListMethods as method>
+
+    @Override
+    public ${method.returnType} ${method.name}(${method.parameters}) {
+        return ${method.keyName}Index.get(${method.keyParameter});
+    }
+    </#list>
     <#list unrecognizedMethods as method>
 
     @Override

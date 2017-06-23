@@ -4,41 +4,38 @@ package com.skunkworks.fastorm.processor.cache.template;
  * stole on 09.06.17.
  */
 public class MethodData {
-    private String name;
-    private String returnType = "void";
-    private String parameters;
-    private MethodType type;
+    private final String name;
+    private final String returnType;
+    private final String parameters;
+    private final String keyName;
+    private final String keyParameter;
+
+    public MethodData(String name, String returnType, String parameters, String keyName, String keyParameter) {
+        this.name = name;
+        this.returnType = returnType;
+        this.parameters = parameters;
+        this.keyName = keyName;
+        this.keyParameter = keyParameter;
+    }
 
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getReturnType() {
         return returnType;
     }
 
-    public void setReturnType(String returnType) {
-        this.returnType = returnType;
-    }
-
     public String getParameters() {
         return parameters;
     }
 
-    public void setParameters(String parameters) {
-        this.parameters = parameters;
+    public String getKeyName() {
+        return keyName;
     }
 
-    public MethodType getType() {
-        return type;
-    }
-
-    public void setType(MethodType type) {
-        this.type = type;
+    public String getKeyParameter() {
+        return keyParameter;
     }
 
     @Override
@@ -47,7 +44,8 @@ public class MethodData {
                 "name='" + name + '\'' +
                 ", returnType='" + returnType + '\'' +
                 ", parameters='" + parameters + '\'' +
-                ", type=" + type +
+                ", keyName='" + keyName + '\'' +
+                ", keyParameter='" + keyParameter + '\'' +
                 '}';
     }
 }
