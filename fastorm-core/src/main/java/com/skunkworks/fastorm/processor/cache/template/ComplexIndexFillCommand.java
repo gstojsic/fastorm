@@ -29,4 +29,13 @@ public class ComplexIndexFillCommand {
     public String getConstructorParams() {
         return constructorParams;
     }
+
+    @Override
+    public String toString() {
+        return "ComplexIndexFillCommand{" +
+                "indexName='" + indexName + '\'' +
+                ", keyClass='" + keyClass + '\'' +
+                ", constructorParams='" + constructorParams + '\'' +
+                '}';
+    }
 }

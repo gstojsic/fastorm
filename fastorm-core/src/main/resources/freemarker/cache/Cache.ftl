@@ -73,13 +73,33 @@ public class ${className} implements ${interfaceName} {
 
     private static final class ${keyClass.className} {
         <#list keyClass.fields as field>
-        //
+        private final ${field.type} ${field.name};
         </#list>
 
         ${keyClass.className}(${keyClass.constructorParams}) {
             <#list keyClass.constructorInitializers as initializer>
-            //
+            this.${initializer} = ${initializer};
             </#list>
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            //FirstNameAndLastNameKey that = (FirstNameAndLastNameKey) o;
+
+            //if (firstName != null ? !firstName.equals(that.firstName) : that.firstName != null) return false;
+            //if (lastName != null ? !lastName.equals(that.lastName) : that.lastName != null) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = firstName != null ? firstName.hashCode() : 0;
+            result = 31 * result + (lastName != null ? lastName.hashCode() : 0);
+            return result;
         }
     }
     </#list>

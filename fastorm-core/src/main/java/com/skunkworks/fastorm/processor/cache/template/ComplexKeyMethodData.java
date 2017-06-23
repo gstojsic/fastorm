@@ -50,4 +50,16 @@ public class ComplexKeyMethodData {
     public String getConstructorParams() {
         return constructorParams;
     }
+
+    @Override
+    public String toString() {
+        return "ComplexKeyMethodData{" +
+                "name='" + name + '\'' +
+                ", returnType='" + returnType + '\'' +
+                ", parameters='" + parameters + '\'' +
+                ", keyName='" + keyName + '\'' +
+                ", keyClass='" + keyClass + '\'' +
+                ", constructorParams='" + constructorParams + '\'' +
+                '}';
+    }
 }

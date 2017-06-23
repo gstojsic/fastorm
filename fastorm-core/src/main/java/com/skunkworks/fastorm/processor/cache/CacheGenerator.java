@@ -4,6 +4,7 @@ import com.skunkworks.fastorm.annotations.Cache;
 import com.skunkworks.fastorm.processor.AbstractGenerator;
 import com.skunkworks.fastorm.processor.cache.template.ComplexIndexFillCommand;
 import com.skunkworks.fastorm.processor.cache.template.ComplexKeyClass;
+import com.skunkworks.fastorm.processor.cache.template.ComplexKeyField;
 import com.skunkworks.fastorm.processor.cache.template.ComplexKeyMethodData;
 import com.skunkworks.fastorm.processor.cache.template.FieldData;
 import com.skunkworks.fastorm.processor.cache.template.Index;
@@ -136,8 +137,10 @@ public class CacheGenerator extends AbstractGenerator {
                     complexKeyQueryMethods.add(prepareComplexKeyMethodData(methodAnalysisData, indexName, keyClassName));
 
                     //compute required fields
-                    List<FieldData> componentFields = keyComponents.stream().
+                    List<String> keyComponentsLowercase = keyComponents.stream().
                             map(Tools::lowercaseFirstLetter).
+                            collect(toList());
+                    List<FieldData> componentFields = keyComponentsLowercase.stream().
                             map(keyComponent -> fields.stream().
                                     filter(fieldData -> keyComponent.equals(fieldData.getName())).
                                     findFirst().
@@ -160,8 +163,12 @@ public class CacheGenerator extends AbstractGenerator {
                     String keyConstructorParams = componentFields.stream().
                             map(field -> field.getType() + " " + field.getName()).
                             collect(joining(", "));
+
+                    List<ComplexKeyField> complexKeyFields = componentFields.stream().
+                            map(field -> new ComplexKeyField(field.getName(), field.getType())).
+                            collect(toList());
                     //Setup complex key class
-                    complexKeyClasses.add(new ComplexKeyClass(keyClassName, keyConstructorParams, Collections.emptyList(), Collections.emptyList()));
+                    complexKeyClasses.add(new ComplexKeyClass(keyClassName, keyConstructorParams, complexKeyFields, keyComponentsLowercase));
                 } else {
                     // Simple Key
                     //check against fields.
