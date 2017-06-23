@@ -2,6 +2,9 @@ package com.skunkworks.fastorm.processor.cache;
 
 import com.skunkworks.fastorm.annotations.Cache;
 import com.skunkworks.fastorm.processor.AbstractGenerator;
+import com.skunkworks.fastorm.processor.cache.template.ComplexIndexFillCommand;
+import com.skunkworks.fastorm.processor.cache.template.ComplexKeyClass;
+import com.skunkworks.fastorm.processor.cache.template.ComplexKeyMethodData;
 import com.skunkworks.fastorm.processor.cache.template.FieldData;
 import com.skunkworks.fastorm.processor.cache.template.Index;
 import com.skunkworks.fastorm.processor.cache.template.IndexFillCommand;
@@ -81,41 +84,87 @@ public class CacheGenerator extends AbstractGenerator {
         //Process Methods of the interface
         //Interface Methods
         List<MethodData> queryMethods = new ArrayList<>();
-        List<MethodData> queryListMethods = new ArrayList<>();
+        List<ComplexKeyMethodData> complexKeyQueryMethods = new ArrayList<>();
         List<MethodData> unrecognizedMethods = new ArrayList<>();
 
         //indexes
-        final List<Index> uniqueIndexes = new ArrayList<>();
-        final List<Index> nonuniqueIndexes = new ArrayList<>();
+        final List<Index> indexes = new ArrayList<>();
         final List<IndexFillCommand> indexFillCommands = new ArrayList<>();
+        final List<IndexFillCommand> listIndexFillCommands = new ArrayList<>();
+
+        final List<ComplexIndexFillCommand> indexComplexFillCommands = new ArrayList<>();
+
+        final List<IndexFillCommand> indexUpdateCommands = new ArrayList<>();
+        final List<IndexFillCommand> indexDeleteCommands = new ArrayList<>();
+
+        final List<ComplexKeyClass> complexKeyClasses = new ArrayList<>();
 
         annotatedElement.getEnclosedElements().forEach(enclosedElement -> {
             if (ElementKind.METHOD == enclosedElement.getKind()) {
                 MethodAnalysisData methodAnalysisData = processMethod(enclosedElement);
-                if (MethodType.QUERY_SINGLE.equals(methodAnalysisData.getType())) {
+
+                if (MethodType.UNRECOGNIZED.equals(methodAnalysisData.getType())) {
+                    unrecognizedMethods.add(prepareMethodData(methodAnalysisData, null));
+                    return;
+                }
+
+                List<String> keyComponents = methodAnalysisData.getKeyComponents();
+                if (keyComponents == null || keyComponents.isEmpty())
+                    throw new RuntimeException("There are no key components.");
+
+                //Check all keyComponents have fields.
+                boolean allComponentsHaveFields = keyComponents.stream().
+                        map(Tools::lowercaseFirstLetter).
+                        allMatch(keyComponent -> fields.stream().anyMatch(fieldData -> keyComponent.equals(fieldData.getName())));
+
+                if (!allComponentsHaveFields)
+                    throw new RuntimeException("Not all key components have matching fields.");
+
+                String capitalizedKeyName = String.join("And", keyComponents);
+                String indexName = Tools.lowercaseFirstLetter(capitalizedKeyName);
+
+                if (keyComponents.size() > 1) {
+                    // Complex Key
+                    String keyClassName = capitalizedKeyName + "Key";
+
+                    final Index index = new Index(indexName, keyClassName, methodAnalysisData.getReturnType());
+                    indexes.add(index);
+
+                    complexKeyQueryMethods.add(prepareComplexKeyMethodData(methodAnalysisData, indexName, keyClassName));
+                    ComplexIndexFillCommand complexIndexFillCommand = new ComplexIndexFillCommand(indexName, keyClassName);
+
+                    if (MethodType.QUERY_SINGLE.equals(methodAnalysisData.getType())) {
+                        indexComplexFillCommands.add(complexIndexFillCommand);
+                    } else if (MethodType.QUERY_LIST.equals(methodAnalysisData.getType())) {
+//                        listIndexFillCommands.add(indexFillCommand);
+//                        additionalImports.add(ArrayList.class.getCanonicalName());
+                    } else {
+                        throw new RuntimeException("Unknown method type:" + methodAnalysisData.getType());
+                    }
+                    //Setup complex key class
+                    complexKeyClasses.add(new ComplexKeyClass(keyClassName));
+                } else {
+                    // Simple Key
                     //check against fields.
                     FieldData matchingField = fields.stream().
-                            filter(field -> methodAnalysisData.getKeyName().equals(field.getName())).
+                            filter(field -> indexName.equals(field.getName())).
                             findFirst().
                             orElseThrow(() -> new RuntimeException("Matching field not found:" + 2));
 
-                    final Index uniqueIndex = new Index(matchingField.getName(), matchingField.getType(), methodAnalysisData.getReturnType());
-                    uniqueIndexes.add(uniqueIndex);
-                    queryMethods.add(prepareMethodData(methodAnalysisData));
+                    final Index index = new Index(indexName, matchingField.getType(), methodAnalysisData.getReturnType());
+                    indexes.add(index);
 
-                    //TODO: indexFillCommands
-                    //indexFillCommands.add(new IndexFillCommand());
-                } else if (MethodType.QUERY_LIST.equals(methodAnalysisData.getType())) {
-                    FieldData matchingField = fields.stream().
-                            filter(field -> methodAnalysisData.getKeyName().equals(field.getName())).
-                            findFirst().
-                            orElseThrow(() -> new RuntimeException("Matching field not found:" + 2));
+                    queryMethods.add(prepareMethodData(methodAnalysisData, indexName));
 
-                    final Index uniqueIndex = new Index(matchingField.getName(), matchingField.getType(), methodAnalysisData.getReturnType());
-                    uniqueIndexes.add(uniqueIndex);
-                    queryListMethods.add(prepareMethodData(methodAnalysisData));
-                } else {
-                    unrecognizedMethods.add(prepareMethodData(methodAnalysisData));
+                    IndexFillCommand indexFillCommand = new IndexFillCommand(matchingField.getName(), matchingField.getGetter());
+                    if (MethodType.QUERY_SINGLE.equals(methodAnalysisData.getType())) {
+                        indexFillCommands.add(indexFillCommand);
+                    } else if (MethodType.QUERY_LIST.equals(methodAnalysisData.getType())) {
+                        listIndexFillCommands.add(indexFillCommand);
+                        additionalImports.add(ArrayList.class.getCanonicalName());
+                    } else {
+                        throw new RuntimeException("Unknown method type:" + methodAnalysisData.getType());
+                    }
                 }
             }
         });
@@ -142,25 +191,44 @@ public class CacheGenerator extends AbstractGenerator {
 
         context.put("fields", fields);
         context.put("additionalImports", additionalImports);
-        context.put("uniqueIndexes", uniqueIndexes);
+        context.put("indexes", indexes);
 
         context.put("queryMethods", queryMethods);
-        context.put("queryListMethods", queryListMethods);
+        context.put("complexKeyQueryMethods", complexKeyQueryMethods);
 
         context.put("indexFillCommands", indexFillCommands);
+        context.put("listIndexFillCommands", listIndexFillCommands);
+        context.put("indexComplexFillCommands", indexComplexFillCommands);
+
+        context.put("indexUpdateCommands", indexUpdateCommands);
+        context.put("indexDeleteCommands", indexDeleteCommands);
+
+        context.put("complexKeyClasses", complexKeyClasses);
+
         context.put("unrecognizedMethods", unrecognizedMethods);
 
         write(className, "cache/Cache.ftl", context);
     }
 
-    private MethodData prepareMethodData(MethodAnalysisData methodAnalysisData) {
+    private MethodData prepareMethodData(MethodAnalysisData methodAnalysisData, String keyName) {
         final String keyParameter = methodAnalysisData.getParameterNames().get(0); //TODO: more checks
         return new MethodData(
                 methodAnalysisData.getName(),
                 methodAnalysisData.getReturnType(),
                 String.join(", ", methodAnalysisData.getParameters()),
-                methodAnalysisData.getKeyName(),
-                keyParameter);
+                keyName,
+                keyParameter
+        );
+    }
+
+    private ComplexKeyMethodData prepareComplexKeyMethodData(MethodAnalysisData methodAnalysisData, String keyName, String keyClass) {
+        return new ComplexKeyMethodData(
+                methodAnalysisData.getName(),
+                methodAnalysisData.getReturnType(),
+                String.join(", ", methodAnalysisData.getParameters()),
+                keyName,
+                keyClass
+        );
     }
 
     private FieldData processField(Element field, String name) {
@@ -225,12 +293,15 @@ public class CacheGenerator extends AbstractGenerator {
             if (parser.getNumberOfSyntaxErrors() == 0) {
 
                 List<String> keyComponents = listener.getKeyComponents();
-                if (keyComponents.size() == 1) {
-                    //process Simple key
-                    methodData.setKeyName(Tools.lowercaseFirstLetter(keyComponents.get(0)));
-                } else {
-                    //process Complex key
-                }
+                methodData.setKeyComponents(keyComponents);
+
+//                if (keyComponents.size() == 1) {
+//                    //process Simple key
+//                    methodData.setKeyName(Tools.lowercaseFirstLetter(keyComponents.get(0)));
+//                } else {
+//                    //process Complex key
+//                    methodData.setComplexKey(true);
+//                }
 
                 TypeElement returnTypeElement = getTypeElement(declaredReturnType);
                 if (List.class.getCanonicalName().equals(returnTypeElement.getQualifiedName().toString()) ||

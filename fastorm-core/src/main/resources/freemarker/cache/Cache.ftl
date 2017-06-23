@@ -6,14 +6,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 <#list additionalImports as import>
-${import};
+import ${import};
 </#list>
 
 public class ${className} implements ${interfaceName} {
 
     protected final Dao<${entityName}, ${idField.type}> dao;
 
-    <#list uniqueIndexes as index>
+    <#list indexes as index>
     protected final Map<${index.keyType}, ${index.valueType}> ${index.name}Index = new HashMap<>();
     </#list>
 
@@ -25,10 +25,28 @@ public class ${className} implements ${interfaceName} {
     private void loadData() {
         List<${entityName}> entities = dao.findAll();
         for (${entityName} entity : entities) {
-        <#list indexFillCommands as command>
-        //firstNameIndex.put(entity.getFirstName(), entity);
-        </#list>
+            <#list indexFillCommands as command>
+            ${command.indexName}Index.put(entity.${command.entityGetter}(), entity);
+            </#list>
+            <#list listIndexFillCommands as command>
+            ${command.indexName}Index.computeIfAbsent(entity.${command.entityGetter}(), s -> new ArrayList<>()).add(entity);
+            </#list>
+            <#list indexComplexFillCommands as command>
+            ${command.indexName}Index.put(new ${command.keyClass}(), entity);
+            </#list>
         }
+    }
+
+    private void updateIndexes(${entityName} entity) {
+        <#list indexUpdateCommands as command>
+        //
+        </#list>
+    }
+
+    private void deleteFromIndexes(${entityName} entity) {
+        <#list indexDeleteCommands as command>
+        //
+        </#list>
     }
     <#list queryMethods as method>
 
@@ -37,11 +55,11 @@ public class ${className} implements ${interfaceName} {
         return ${method.keyName}Index.get(${method.keyParameter});
     }
     </#list>
-    <#list queryListMethods as method>
+    <#list complexKeyQueryMethods as method>
 
     @Override
     public ${method.returnType} ${method.name}(${method.parameters}) {
-        return ${method.keyName}Index.get(${method.keyParameter});
+        return ${method.keyName}Index.get(new ${method.keyClass}());
     }
     </#list>
     <#list unrecognizedMethods as method>
@@ -49,6 +67,13 @@ public class ${className} implements ${interfaceName} {
     @Override
     public ${method.returnType} ${method.name}(${method.parameters}) {
         throw new UnsupportedOperationException("${method.name}");
+    }
+    </#list>
+    <#list complexKeyClasses as keyClass>
+
+    private static final class ${keyClass.className} {
+        ${keyClass.className}() {
+        }
     }
     </#list>
 }

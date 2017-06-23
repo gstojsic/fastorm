@@ -11,9 +11,10 @@ public class MethodAnalysisData {
     private String name;
     private String returnType = "void";
     private List<String> parameters;
-    private String keyName;
+    //private String keyName;
     private MethodType type = MethodType.UNRECOGNIZED;
     private List<String> parameterNames;
+    private List<String> keyComponents;
 
     public String getName() {
         return name;
@@ -39,13 +40,13 @@ public class MethodAnalysisData {
         this.parameters = parameters;
     }
 
-    public String getKeyName() {
-        return keyName;
-    }
-
-    public void setKeyName(String keyName) {
-        this.keyName = keyName;
-    }
+//    public String getKeyName() {
+//        return keyName;
+//    }
+//
+//    public void setKeyName(String keyName) {
+//        this.keyName = keyName;
+//    }
 
     public MethodType getType() {
         return type;
@@ -63,18 +64,27 @@ public class MethodAnalysisData {
         this.parameterNames = parameterNames;
     }
 
+    public List<String> getKeyComponents() {
+        return keyComponents;
+    }
+
+    public void setKeyComponents(List<String> keyComponents) {
+        this.keyComponents = keyComponents;
+    }
+
     @Override
     public String toString() {
         return "MethodAnalysisData{" +
                 "name='" + name + '\'' +
                 ", returnType='" + returnType + '\'' +
                 ", parameters=" + parameters +
-                ", keyName='" + keyName + '\'' +
                 ", type=" + type +
+                ", parameterNames=" + parameterNames +
+                ", keyComponents=" + keyComponents +
                 '}';
     }
 
-/*
+    /*
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
