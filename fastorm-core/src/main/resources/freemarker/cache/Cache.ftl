@@ -32,7 +32,7 @@ public class ${className} implements ${interfaceName} {
             ${command.indexName}Index.computeIfAbsent(entity.${command.entityGetter}(), s -> new ArrayList<>()).add(entity);
             </#list>
             <#list indexComplexFillCommands as command>
-            ${command.indexName}Index.put(new ${command.keyClass}(${command.constructorParams}), entity);
+            ${command.indexName}Index.put(new ${command.keyClass}(<#list command.constructorParams as param>entity.${param}()<#sep>, </#list>), entity);
             </#list>
         }
     }
@@ -51,32 +51,32 @@ public class ${className} implements ${interfaceName} {
     <#list queryMethods as method>
 
     @Override
-    public ${method.returnType} ${method.name}(${method.parameters}) {
+    public ${method.returnType} ${method.name}(<#list method.parameters as name, type>${type} ${name}<#sep>, </#list>) {
         return ${method.keyName}Index.get(${method.keyParameter});
     }
     </#list>
     <#list complexKeyQueryMethods as method>
 
     @Override
-    public ${method.returnType} ${method.name}(${method.parameters}) {
-        return ${method.keyName}Index.get(new ${method.keyClass}(${method.constructorParams}));
+    public ${method.returnType} ${method.name}(<#list method.parameters as name, type>${type} ${name}<#sep>, </#list>) {
+        return ${method.keyName}Index.get(new ${method.keyClass}(<#list method.constructorParams as param>${param}<#sep>, </#list>));
     }
     </#list>
     <#list unrecognizedMethods as method>
 
     @Override
-    public ${method.returnType} ${method.name}(${method.parameters}) {
+    public ${method.returnType} ${method.name}(<#list method.parameters as name, type>${type} ${name}<#sep>, </#list>) {
         throw new UnsupportedOperationException("${method.name}");
     }
     </#list>
     <#list complexKeyClasses as keyClass>
 
     private static final class ${keyClass.className} {
-        <#list keyClass.fields as field>
-        private final ${field.type} ${field.name};
+        <#list keyClass.fields as name, type>
+        private final ${type} ${name};
         </#list>
 
-        ${keyClass.className}(${keyClass.constructorParams}) {
+        ${keyClass.className}(<#list keyClass.constructorParams as name, type>${type} ${name}<#sep>, </#list>) {
             <#list keyClass.constructorInitializers as initializer>
             this.${initializer} = ${initializer};
             </#list>
@@ -87,19 +87,22 @@ public class ${className} implements ${interfaceName} {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            //FirstNameAndLastNameKey that = (FirstNameAndLastNameKey) o;
+            ${keyClass.className} that = (${keyClass.className}) o;
 
-            //if (firstName != null ? !firstName.equals(that.firstName) : that.firstName != null) return false;
-            //if (lastName != null ? !lastName.equals(that.lastName) : that.lastName != null) return false;
+            <#list keyClass.primitiveEquals as field>
+            if (${field} != that.${field}) return false;
+            </#list>
+
+            <#list keyClass.nonprimitiveEquals as field>
+            if (${field} != null ? !${field}.equals(that.${field}) : that.${field} != null) return false;
+            </#list>
 
             return true;
         }
 
         @Override
         public int hashCode() {
-            int result = firstName != null ? firstName.hashCode() : 0;
-            result = 31 * result + (lastName != null ? lastName.hashCode() : 0);
-            return result;
+            return Objects.hash(<#list keyClass.hashParams as param>${param}<#sep>, </#list>);
         }
     }
     </#list>

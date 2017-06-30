@@ -1,7 +1,8 @@
 package com.skunkworks;
 
 import com.skunkworks.persistence.Customer;
-import com.skunkworks.persistence.CustomerDao;
+import com.skunkworks.persistence.CustomerCache;
+import com.skunkworks.persistence.CustomerCacheImpl;
 import com.skunkworks.persistence.CustomerDaoImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.time.StopWatch;
@@ -45,9 +46,6 @@ public class FastOrmApplication {
             final CustomerRepo customerRepo,
             final DataSource dataSource
     ) {
-//        log.info("Charset number:" + Charset.availableCharsets().size());
-//        Charset.availableCharsets().values().forEach(charset -> log.info(charset.displayName()));
-
         return (args) -> {
 //            customerRepo.deleteAll();
 //            List<Customer> customers = new ArrayList<>(ITERATIONS);
@@ -68,7 +66,7 @@ public class FastOrmApplication {
             }
 
 
-            List<Customer> loadedFastOrm = measureTime((Function<Void, List<Customer>>) t -> {
+            List<Customer> loadedFastOrm = measureTime(t -> {
                 try {
                     return customerDao.findAll();
                 } catch (Exception e) {
@@ -76,7 +74,7 @@ public class FastOrmApplication {
                 }
             }, "LoadAll fastOrm");
 
-            Iterable<Customer> loadedSpring = measureTime((Function<Void, Iterable<Customer>>) t -> {
+            Iterable<Customer> loadedSpring = measureTime(t -> {
                 try {
                     return customerRepo.findAll();
                 } catch (Exception e) {
@@ -84,7 +82,7 @@ public class FastOrmApplication {
                 }
             }, "LoadAll spring");
 
-            loadedFastOrm = measureTime((Function<Void, List<Customer>>) t -> {
+            loadedFastOrm = measureTime(t -> {
                 try {
                     return customerDao.findAll();
                 } catch (Exception e) {
@@ -92,7 +90,7 @@ public class FastOrmApplication {
                 }
             }, "LoadAll fastOrm");
 
-            loadedSpring = measureTime((Function<Void, Iterable<Customer>>) t -> {
+            loadedSpring = measureTime(t -> {
                 try {
                     return customerRepo.findAll();
                 } catch (Exception e) {
@@ -100,7 +98,7 @@ public class FastOrmApplication {
                 }
             }, "LoadAll spring");
 
-            loadedFastOrm = measureTime((Function<Void, List<Customer>>) t -> {
+            loadedFastOrm = measureTime(t -> {
                 try {
                     return customerDao.findAll();
                 } catch (Exception e) {
@@ -108,7 +106,7 @@ public class FastOrmApplication {
                 }
             }, "LoadAll fastOrm");
 
-            loadedSpring = measureTime((Function<Void, Iterable<Customer>>) t -> {
+            loadedSpring = measureTime(t -> {
                 try {
                     return customerRepo.findAll();
                 } catch (Exception e) {
@@ -116,7 +114,7 @@ public class FastOrmApplication {
                 }
             }, "LoadAll spring");
 
-            loadedFastOrm = measureTime((Function<Void, List<Customer>>) t -> {
+            loadedFastOrm = measureTime(t -> {
                 try {
                     return customerDao.findAll();
                 } catch (Exception e) {
@@ -124,7 +122,7 @@ public class FastOrmApplication {
                 }
             }, "LoadAll fastOrm");
 
-            loadedSpring = measureTime((Function<Void, Iterable<Customer>>) t -> {
+            loadedSpring = measureTime(t -> {
                 try {
                     return customerRepo.findAll();
                 } catch (Exception e) {
@@ -132,7 +130,7 @@ public class FastOrmApplication {
                 }
             }, "LoadAll spring");
 
-            loadedFastOrm = measureTime((Function<Void, List<Customer>>) t -> {
+            loadedFastOrm = measureTime(t -> {
                 try {
                     return customerDao.findAll();
                 } catch (Exception e) {
@@ -140,13 +138,21 @@ public class FastOrmApplication {
                 }
             }, "LoadAll fastOrm");
 
-            loadedSpring = measureTime((Function<Void, Iterable<Customer>>) t -> {
+            loadedSpring = measureTime(t -> {
                 try {
                     return customerRepo.findAll();
                 } catch (Exception e) {
                     return null;
                 }
             }, "LoadAll spring");
+
+            CustomerCache customerCache = new CustomerCacheImpl(customerDao);
+            Customer customer = customerCache.findByFirstName("Ivo233232");
+            if (customer != null) {
+                log.info("Customer found:" + customer);
+            } else {
+                log.info("Customer not found");
+            }
 
             log.info("Done");
         };

@@ -1,16 +1,18 @@
 package com.skunkworks.fastorm.processor.cache.template;
 
+import java.util.Map;
+
 /**
  * stole on 09.06.17.
  */
 public class MethodData {
     private final String name;
     private final String returnType;
-    private final String parameters;
+    private final Map<String, String> parameters;
     private final String keyName;
     private final String keyParameter;
 
-    public MethodData(String name, String returnType, String parameters, String keyName, String keyParameter) {
+    public MethodData(String name, String returnType, Map<String, String> parameters, String keyName, String keyParameter) {
         this.name = name;
         this.returnType = returnType;
         this.parameters = parameters;
@@ -26,7 +28,7 @@ public class MethodData {
         return returnType;
     }
 
-    public String getParameters() {
+    public Map<String, String> getParameters() {
         return parameters;
     }
 

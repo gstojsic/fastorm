@@ -1,23 +1,26 @@
 package com.skunkworks.fastorm.processor.cache.template;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * stole on 23.06.17.
  */
 public class ComplexKeyMethodData {
     private final String name;
     private final String returnType;
-    private final String parameters;
+    private final Map<String, String> parameters;
     private final String keyName;
     private final String keyClass;
-    private final String constructorParams;
+    private final List<String> constructorParams;
 
     public ComplexKeyMethodData(
             String name,
             String returnType,
-            String parameters,
+            Map<String, String> parameters,
             String keyName,
             String keyClass,
-            String constructorParams
+            List<String> constructorParams
     ) {
         this.name = name;
         this.returnType = returnType;
@@ -35,7 +38,7 @@ public class ComplexKeyMethodData {
         return returnType;
     }
 
-    public String getParameters() {
+    public Map<String, String> getParameters() {
         return parameters;
     }
 
@@ -47,7 +50,7 @@ public class ComplexKeyMethodData {
         return keyClass;
     }
 
-    public String getConstructorParams() {
+    public List<String> getConstructorParams() {
         return constructorParams;
     }
 

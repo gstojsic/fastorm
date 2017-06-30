@@ -9,13 +9,15 @@ public class FieldData {
     private final String getter;
     private final String setter;
     private final boolean id;
+    private final boolean primitive;
 
-    public FieldData(String name, String type, String getter, String setter, boolean isId) {
+    public FieldData(String name, String type, String getter, String setter, boolean isId, boolean isPrimitive) {
         this.name = name;
         this.type = type;
         this.getter = getter;
         this.setter = setter;
         this.id = isId;
+        primitive = isPrimitive;
     }
 
     public String getName() {
@@ -38,6 +40,10 @@ public class FieldData {
         return id;
     }
 
+    public boolean isPrimitive() {
+        return primitive;
+    }
+
     @Override
     public String toString() {
         return "FieldData{" +
@@ -46,6 +52,7 @@ public class FieldData {
                 ", getter='" + getter + '\'' +
                 ", setter='" + setter + '\'' +
                 ", id=" + id +
+                ", primitive=" + primitive +
                 '}';
     }
 }

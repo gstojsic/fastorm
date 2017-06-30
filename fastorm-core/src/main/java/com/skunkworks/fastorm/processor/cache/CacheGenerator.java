@@ -4,7 +4,6 @@ import com.skunkworks.fastorm.annotations.Cache;
 import com.skunkworks.fastorm.processor.AbstractGenerator;
 import com.skunkworks.fastorm.processor.cache.template.ComplexIndexFillCommand;
 import com.skunkworks.fastorm.processor.cache.template.ComplexKeyClass;
-import com.skunkworks.fastorm.processor.cache.template.ComplexKeyField;
 import com.skunkworks.fastorm.processor.cache.template.ComplexKeyMethodData;
 import com.skunkworks.fastorm.processor.cache.template.FieldData;
 import com.skunkworks.fastorm.processor.cache.template.Index;
@@ -38,15 +37,14 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.*;
 
 /**
  * stole on 19.02.17.
@@ -147,9 +145,9 @@ public class CacheGenerator extends AbstractGenerator {
                                     orElseThrow(() -> new RuntimeException("Field not found:" + keyComponent))).
                             collect(toList());
 
-                    String constructorParams = componentFields.stream().
-                            map(field -> "entity." + field.getGetter() + "()").
-                            collect(joining(", "));
+                    List<String> constructorParams = componentFields.stream().
+                            map(FieldData::getGetter).
+                            collect(toList());
                     ComplexIndexFillCommand complexIndexFillCommand = new ComplexIndexFillCommand(indexName, keyClassName, constructorParams);
 
                     if (MethodType.QUERY_SINGLE.equals(methodAnalysisData.getType())) {
@@ -160,15 +158,33 @@ public class CacheGenerator extends AbstractGenerator {
                     } else {
                         throw new RuntimeException("Unknown method type:" + methodAnalysisData.getType());
                     }
-                    String keyConstructorParams = componentFields.stream().
-                            map(field -> field.getType() + " " + field.getName()).
-                            collect(joining(", "));
+                    Map<String, String> keyConstructorParams = componentFields.stream().
+                            collect(toMap(FieldData::getName, FieldData::getType));
 
-                    List<ComplexKeyField> complexKeyFields = componentFields.stream().
-                            map(field -> new ComplexKeyField(field.getName(), field.getType())).
+                    Map<String, String> complexKeyFields = componentFields.stream().
+                            collect(toMap(FieldData::getName, FieldData::getType));
+
+                    //equals Items
+                    Map<Boolean, List<String>> partitionByPrimitive = componentFields.stream().
+                            collect(partitioningBy(FieldData::isPrimitive, mapping(FieldData::getName, toList())));
+
+                    //hashParams
+                    List<String> hashParams = componentFields.stream().
+                            map(FieldData::getName).
                             collect(toList());
+                    additionalImports.add(Objects.class.getCanonicalName()); // Objects is needed for the hash method
+
                     //Setup complex key class
-                    complexKeyClasses.add(new ComplexKeyClass(keyClassName, keyConstructorParams, complexKeyFields, keyComponentsLowercase));
+                    complexKeyClasses.add(new ComplexKeyClass(
+                            keyClassName,
+                            keyConstructorParams,
+                            complexKeyFields,
+                            keyComponentsLowercase,
+                            partitionByPrimitive.get(true),
+                            partitionByPrimitive.get(false),
+                            hashParams
+                    ));
+
                 } else {
                     // Simple Key
                     //check against fields.
@@ -241,7 +257,7 @@ public class CacheGenerator extends AbstractGenerator {
         return new MethodData(
                 methodAnalysisData.getName(),
                 methodAnalysisData.getReturnType(),
-                String.join(", ", methodAnalysisData.getParameters()),
+                methodAnalysisData.getParameters(),
                 keyName,
                 keyParameter
         );
@@ -255,17 +271,18 @@ public class CacheGenerator extends AbstractGenerator {
         return new ComplexKeyMethodData(
                 methodAnalysisData.getName(),
                 methodAnalysisData.getReturnType(),
-                String.join(", ", methodAnalysisData.getParameters()),
+                methodAnalysisData.getParameters(),
                 keyName,
                 keyClass,
-                String.join(", ", methodAnalysisData.getParameterNames()));
+                methodAnalysisData.getParameterNames());
     }
 
     private FieldData processField(Element field, String name) {
 
         Id idAnnotation = field.getAnnotation(Id.class);
         boolean isId = idAnnotation != null;
-        String getterPrefix = field.asType().getKind().equals(TypeKind.BOOLEAN) ? "is" : "get";
+        TypeKind kind = field.asType().getKind();
+        String getterPrefix = kind.equals(TypeKind.BOOLEAN) ? "is" : "get";
         String capitalizedName = Tools.capitalizeFirstLetter(name);
         String getter = getterPrefix + capitalizedName;
         String setter = "set" + capitalizedName;
@@ -277,7 +294,7 @@ public class CacheGenerator extends AbstractGenerator {
             additionalImports.add(field.asType().toString());
         }
 
-        return new FieldData(name, fieldType.getSimpleName().toString(), getter, setter, isId);
+        return new FieldData(name, fieldType.getSimpleName().toString(), getter, setter, isId, kind.isPrimitive());
     }
 
     private MethodAnalysisData processMethod(Element methodElement) {
@@ -291,12 +308,12 @@ public class CacheGenerator extends AbstractGenerator {
         methodData.setReturnType(getTypeString(returnTypeElement, declaredReturnType));
 
         //method parameters
-        ArrayList<String> parameters = new ArrayList<>();
+        Map<String, String> parameters = new HashMap<>();
         ArrayList<String> parameterNames = new ArrayList<>();
         for (VariableElement param : method.getParameters()) {
             TypeElement paramElement = getTypeElement(param.asType().toString());
             String methodParameterName = param.getSimpleName().toString();
-            parameters.add(paramElement.getSimpleName().toString() + " " + methodParameterName);
+            parameters.put(methodParameterName, paramElement.getSimpleName().toString());
             parameterNames.add(methodParameterName);
         }
         methodData.setParameters(parameters);
@@ -324,14 +341,6 @@ public class CacheGenerator extends AbstractGenerator {
 
                 List<String> keyComponents = listener.getKeyComponents();
                 methodData.setKeyComponents(keyComponents);
-
-//                if (keyComponents.size() == 1) {
-//                    //process Simple key
-//                    methodData.setKeyName(Tools.lowercaseFirstLetter(keyComponents.get(0)));
-//                } else {
-//                    //process Complex key
-//                    methodData.setComplexKey(true);
-//                }
 
                 TypeElement returnTypeElement = getTypeElement(declaredReturnType);
                 if (List.class.getCanonicalName().equals(returnTypeElement.getQualifiedName().toString()) ||

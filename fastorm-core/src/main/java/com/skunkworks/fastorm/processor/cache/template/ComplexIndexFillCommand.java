@@ -1,17 +1,19 @@
 package com.skunkworks.fastorm.processor.cache.template;
 
+import java.util.List;
+
 /**
  * stole on 23.06.17.
  */
 public class ComplexIndexFillCommand {
     private final String indexName;
     private final String keyClass;
-    private final String constructorParams;
+    private final List<String> constructorParams;
 
     public ComplexIndexFillCommand(
             String indexName,
             String keyClass,
-            String constructorParams
+            List<String> constructorParams
     ) {
         this.indexName = indexName;
         this.keyClass = keyClass;
@@ -26,7 +28,7 @@ public class ComplexIndexFillCommand {
         return keyClass;
     }
 
-    public String getConstructorParams() {
+    public List<String> getConstructorParams() {
         return constructorParams;
     }
 
