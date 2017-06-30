@@ -24,4 +24,7 @@ public class Customer {
 
     @Column(name = "lastname")
     private String lastName;
+
+//    @Column(name = "address")
+//    private long address;
 }

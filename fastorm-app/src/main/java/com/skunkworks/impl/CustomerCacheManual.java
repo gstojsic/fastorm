@@ -49,6 +49,11 @@ public class CustomerCacheManual implements CustomerCache {
         return firstNameAndlastNameIndex.get(new FirstNameAndLastNameKey(firstName, lastName));
     }
 
+//    @Override
+//    public Customer findByFirstNameAndAddress(String firstName, long address) {
+//        return null;
+//    }
+
     private static final class FirstNameAndLastNameKey {
         final String firstName;
         final String lastName;

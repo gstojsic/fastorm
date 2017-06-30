@@ -2,6 +2,7 @@ package com.skunkworks.fastorm.processor.tool;
 
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
+import javax.lang.model.type.TypeKind;
 import javax.tools.Diagnostic;
 import java.math.BigDecimal;
 
@@ -12,22 +13,24 @@ public enum Tools {
     ;
 
     public static String getRecordsetType(Element element, Messager messager) {
-        if (Long.class.getCanonicalName().equals(element.asType().toString())) {
-            return "Long";
-        } else if (Integer.class.getCanonicalName().equals(element.asType().toString())) {
-            return "Integer";
+        if (Long.class.getCanonicalName().equals(element.asType().toString()) || element.asType().getKind() == TypeKind.LONG) {
+            return Long.class.getSimpleName();
+        } else if (Integer.class.getCanonicalName().equals(element.asType().toString()) || element.asType().getKind() == TypeKind.INT) {
+            return "Int";
+        } else if (Boolean.class.getCanonicalName().equals(element.asType().toString()) || element.asType().getKind() == TypeKind.BOOLEAN) {
+            return Boolean.class.getSimpleName();
         } else if (String.class.getCanonicalName().equals(element.asType().toString())) {
-            return "String";
-        } else if (Boolean.class.getCanonicalName().equals(element.asType().toString())) {
-            return "Boolean";
-        } else if (Byte.class.getCanonicalName().equals(element.asType().toString())) {
-            return "Byte";
-        } else if (Float.class.getCanonicalName().equals(element.asType().toString())) {
-            return "Float";
-        } else if (Double.class.getCanonicalName().equals(element.asType().toString())) {
-            return "Double";
+            return String.class.getSimpleName();
+        } else if (Float.class.getCanonicalName().equals(element.asType().toString()) || element.asType().getKind() == TypeKind.FLOAT) {
+            return Float.class.getSimpleName();
+        } else if (Double.class.getCanonicalName().equals(element.asType().toString()) || element.asType().getKind() == TypeKind.DOUBLE) {
+            return Double.class.getSimpleName();
+        } else if (Short.class.getCanonicalName().equals(element.asType().toString()) || element.asType().getKind() == TypeKind.SHORT) {
+            return Short.class.getSimpleName();
+        } else if (Byte.class.getCanonicalName().equals(element.asType().toString()) || element.asType().getKind() == TypeKind.BYTE) {
+            return Byte.class.getSimpleName();
         } else if (BigDecimal.class.getCanonicalName().equals(element.asType().toString())) {
-            return "BigDecimal";
+            return BigDecimal.class.getSimpleName();
         }
 
         error(messager, "Unrecognized type:" + element.asType());

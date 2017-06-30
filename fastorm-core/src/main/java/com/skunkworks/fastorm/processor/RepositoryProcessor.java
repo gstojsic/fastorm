@@ -2,6 +2,7 @@ package com.skunkworks.fastorm.processor;
 
 import com.skunkworks.fastorm.annotations.GenerateRepository;
 import com.skunkworks.fastorm.processor.dao.template.FieldData;
+import com.skunkworks.fastorm.processor.tool.Tools;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -118,7 +119,7 @@ public class RepositoryProcessor extends AbstractProcessor {
         String capitalizedName = name.substring(0, 1).toUpperCase() + name.substring(1);
         String getter = getterPrefix + capitalizedName;
         String setter = "set" + capitalizedName;
-        String recordsetType = getRecordsetType(field);
+        String recordsetType = Tools.getRecordsetType(field, messager);
         return new FieldData(fieldIndex, name, columnName, getter, setter, recordsetType);
     }
 
@@ -127,17 +128,6 @@ public class RepositoryProcessor extends AbstractProcessor {
         String columnAnnotationName = (columnAnnotation != null && !"".equals(columnAnnotation.name())) ? columnAnnotation.name() : name;
         //warn("columnAnnotationName:" + columnAnnotationName);
         return columnAnnotationName;
-    }
-
-    private String getRecordsetType(Element field) {
-        if ("java.lang.Long".equals(field.asType().toString())) {
-            return "Long";
-        } else if ("java.lang.String".equals(field.asType().toString())) {
-            return "String";
-        }
-
-        error("Unrecognized type:" + field.asType());
-        return null;
     }
 
     @Override

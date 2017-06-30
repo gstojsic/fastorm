@@ -15,4 +15,6 @@ public interface CustomerCache {
     List<Customer> findByLastName(String lastName);
 
     Customer findByFirstNameAndLastName(String firstName, String lastName);
+
+    //Customer findByFirstNameAndAddress(String firstName, long address);
 }

@@ -24,6 +24,7 @@ import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -86,7 +87,7 @@ public class DaoGenerator {
         int fieldIndex = 1;
         for (Element enclosedElement : daoValueElement.getEnclosedElements()) {
             String name = enclosedElement.getSimpleName().toString();
-            if (enclosedElement.getKind().isField() && !"DEFAULT_VALUE".equals(name)) {
+            if (isValidField(enclosedElement, name)) {
 
                 fields.add(processField(enclosedElement, name, fieldIndex));
                 fieldIndex++;
@@ -161,6 +162,20 @@ public class DaoGenerator {
         vt.merge(context, writer);
 
         writer.close();
+    }
+
+    private boolean isValidField(Element enclosedElement, String name) {
+        if ("DEFAULT_VALUE".equals(name))
+            return false;
+
+        if (!enclosedElement.getKind().isField())
+            return false;
+
+        //Skip transient fields
+        if (enclosedElement.getModifiers().contains(Modifier.TRANSIENT))
+            return false;
+
+        return true;
     }
 
     private MethodData processMethod(Element methodElement) {

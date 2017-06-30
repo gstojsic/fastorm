@@ -2,7 +2,7 @@ package com.skunkworks;
 
 import com.skunkworks.persistence.Customer;
 import com.skunkworks.persistence.CustomerCache;
-import com.skunkworks.persistence.CustomerCacheImpl;
+import com.skunkworks.persistence.CustomerCacheGenerated;
 import com.skunkworks.persistence.CustomerDaoImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.time.StopWatch;
@@ -146,7 +146,7 @@ public class FastOrmApplication {
                 }
             }, "LoadAll spring");
 
-            CustomerCache customerCache = new CustomerCacheImpl(customerDao);
+            CustomerCache customerCache = new CustomerCacheGenerated(customerDao);
             Customer customer = customerCache.findByFirstName("Ivo233232");
             if (customer != null) {
                 log.info("Customer found:" + customer);

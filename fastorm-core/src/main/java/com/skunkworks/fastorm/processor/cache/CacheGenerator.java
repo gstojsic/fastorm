@@ -25,6 +25,7 @@ import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -80,6 +81,7 @@ public class CacheGenerator extends AbstractGenerator {
         List<FieldData> fields = cacheValueElement.getEnclosedElements().stream().
                 filter(element -> element.getKind().isField()).
                 filter(element -> !"DEFAULT_VALUE".equals(element.getSimpleName().toString())).
+                filter(element -> !element.getModifiers().contains(Modifier.TRANSIENT)).
                 map(element -> processField(element, element.getSimpleName().toString())).
                 collect(toList());
 
@@ -213,7 +215,7 @@ public class CacheGenerator extends AbstractGenerator {
 
 
         String interfaceName = annotatedElement.getSimpleName().toString();
-        String className = interfaceName + "Impl";
+        String className = interfaceName + "Generated";
         PackageElement packageElement = (PackageElement) annotatedElement.getEnclosingElement();
 
         Map<String, Object> context = new HashMap<>();
@@ -286,15 +288,20 @@ public class CacheGenerator extends AbstractGenerator {
         String capitalizedName = Tools.capitalizeFirstLetter(name);
         String getter = getterPrefix + capitalizedName;
         String setter = "set" + capitalizedName;
-        String canonicalType = field.asType().toString();
 
-        TypeElement fieldType = getTypeElement(canonicalType);
-
-        if (!field.asType().toString().startsWith("java.lang")) {
-            additionalImports.add(field.asType().toString());
+        final String type;
+        if (kind.isPrimitive()) {
+            type = field.asType().toString();
+        } else {
+            String canonicalType = field.asType().toString();
+            TypeElement fieldType = getTypeElement(canonicalType);
+            if (!field.asType().toString().startsWith("java.lang")) {
+                additionalImports.add(field.asType().toString());
+            }
+            type = fieldType.getSimpleName().toString();
         }
 
-        return new FieldData(name, fieldType.getSimpleName().toString(), getter, setter, isId, kind.isPrimitive());
+        return new FieldData(name, type, getter, setter, isId, kind.isPrimitive());
     }
 
     private MethodAnalysisData processMethod(Element methodElement) {
@@ -311,10 +318,15 @@ public class CacheGenerator extends AbstractGenerator {
         Map<String, String> parameters = new HashMap<>();
         ArrayList<String> parameterNames = new ArrayList<>();
         for (VariableElement param : method.getParameters()) {
-            TypeElement paramElement = getTypeElement(param.asType().toString());
             String methodParameterName = param.getSimpleName().toString();
-            parameters.put(methodParameterName, paramElement.getSimpleName().toString());
             parameterNames.add(methodParameterName);
+
+            if (param.asType().getKind().isPrimitive()) {
+                parameters.put(methodParameterName, param.asType().toString());
+            } else {
+                TypeElement paramElement = getTypeElement(param.asType().toString());
+                parameters.put(methodParameterName, paramElement.getSimpleName().toString());
+            }
         }
         methodData.setParameters(parameters);
         methodData.setParameterNames(parameterNames);
