@@ -7,7 +7,7 @@
     <groupId>com.skunkworks</groupId>
     <artifactId>fastorm</artifactId>
     <packaging>pom</packaging>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <name>Fastorm Project</name>
 
     <modules>

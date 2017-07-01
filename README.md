@@ -1,8 +1,6 @@
 # fastorm
-Proof of concept for annotation processor generated data access objects.
+Proof of concept for annotation processor generated data access objects and caches.
 
 TODO:
-- ID
 - where clause column names
-- cache implementation
 - remove repository

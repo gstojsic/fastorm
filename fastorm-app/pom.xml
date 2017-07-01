@@ -12,13 +12,10 @@
     <parent>
         <groupId>com.skunkworks</groupId>
         <artifactId>fastorm</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>1.0.0-SNAPSHOT</version>
     </parent>
 
     <properties>
-        <!--<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>-->
-        <!--<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>-->
-        <!--<java.version>1.8</java.version>-->
         <spring.boot.version>1.5.4.RELEASE</spring.boot.version>
     </properties>
 
@@ -49,14 +46,14 @@
         <dependency>
             <groupId>com.skunkworks</groupId>
             <artifactId>fastorm-core</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.0.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>com.skunkworks</groupId>
             <artifactId>fastorm-lib</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>
