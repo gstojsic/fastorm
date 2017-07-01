@@ -43,13 +43,31 @@ public class ${className} implements ${interfaceName} {
 
     public void updateIndexes(${entityName} entity) {
         <#list indexUpdateCommands as command>
-        //
+        ${command.indexName}Index.put(entity.${command.entityGetter}(), entity);
+        </#list>
+        <#list listIndexUpdateCommands as command>
+        CacheTools.updateOrAddToListInIndex(${command.indexName}Index, entity.${command.entityGetter}(), entity);
+        </#list>
+        <#list indexComplexUpdateCommands as command>
+        ${command.indexName}Index.put(new ${command.keyClass}(<#list command.constructorParams as param>entity.${param}()<#sep>, </#list>), entity);
+        </#list>
+        <#list listIndexComplexUpdateCommands as command>
+        CacheTools.updateOrAddToListInIndex(${command.indexName}Index, new ${command.keyClass}(<#list command.constructorParams as param>entity.${param}()<#sep>, </#list>), entity);
         </#list>
     }
 
     public void deleteFromIndexes(${entityName} entity) {
         <#list indexDeleteCommands as command>
-        //
+        ${command.indexName}Index.remove(entity.${command.entityGetter}(), entity);
+        </#list>
+        <#list listIndexDeleteCommands as command>
+        CacheTools.removeFromListInIndex(${command.indexName}Index, entity.${command.entityGetter}(), entity);
+        </#list>
+        <#list indexComplexDeleteCommands as command>
+        ${command.indexName}Index.remove(new ${command.keyClass}(<#list command.constructorParams as param>entity.${param}()<#sep>, </#list>), entity);
+        </#list>
+        <#list listIndexComplexDeleteCommands as command>
+        CacheTools.removeFromListInIndex(${command.indexName}Index, new ${command.keyClass}(<#list command.constructorParams as param>entity.${param}()<#sep>, </#list>), entity);
         </#list>
     }
     <#list queryMethods as method>

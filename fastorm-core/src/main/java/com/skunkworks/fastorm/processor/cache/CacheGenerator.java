@@ -1,13 +1,18 @@
 package com.skunkworks.fastorm.processor.cache;
 
 import com.skunkworks.fastorm.annotations.Cache;
+import com.skunkworks.fastorm.common.CacheTools;
 import com.skunkworks.fastorm.processor.AbstractGenerator;
+import com.skunkworks.fastorm.processor.cache.template.ComplexIndexDeleteCommand;
 import com.skunkworks.fastorm.processor.cache.template.ComplexIndexFillCommand;
+import com.skunkworks.fastorm.processor.cache.template.ComplexIndexUpdateCommand;
 import com.skunkworks.fastorm.processor.cache.template.ComplexKeyClass;
 import com.skunkworks.fastorm.processor.cache.template.ComplexKeyMethodData;
 import com.skunkworks.fastorm.processor.cache.template.FieldData;
 import com.skunkworks.fastorm.processor.cache.template.Index;
+import com.skunkworks.fastorm.processor.cache.template.IndexDeleteCommand;
 import com.skunkworks.fastorm.processor.cache.template.IndexFillCommand;
+import com.skunkworks.fastorm.processor.cache.template.IndexUpdateCommand;
 import com.skunkworks.fastorm.processor.cache.template.MethodData;
 import com.skunkworks.fastorm.processor.cache.template.MethodType;
 import com.skunkworks.fastorm.processor.cache.template.TypeDeclaration;
@@ -97,14 +102,21 @@ public class CacheGenerator extends AbstractGenerator {
 
         //indexes
         final List<Index> indexes = new ArrayList<>();
+
         final List<IndexFillCommand> indexFillCommands = new ArrayList<>();
         final List<IndexFillCommand> listIndexFillCommands = new ArrayList<>();
-
         final List<ComplexIndexFillCommand> indexComplexFillCommands = new ArrayList<>();
         final List<ComplexIndexFillCommand> listIndexComplexFillCommands = new ArrayList<>();
 
-        final List<IndexFillCommand> indexUpdateCommands = new ArrayList<>();
-        final List<IndexFillCommand> indexDeleteCommands = new ArrayList<>();
+        final List<IndexUpdateCommand> indexUpdateCommands = new ArrayList<>();
+        final List<IndexUpdateCommand> listIndexUpdateCommands = new ArrayList<>();
+        final List<ComplexIndexUpdateCommand> indexComplexUpdateCommands = new ArrayList<>();
+        final List<ComplexIndexUpdateCommand> listIndexComplexUpdateCommands = new ArrayList<>();
+
+        final List<IndexDeleteCommand> indexDeleteCommands = new ArrayList<>();
+        final List<IndexDeleteCommand> listIndexDeleteCommands = new ArrayList<>();
+        final List<ComplexIndexDeleteCommand> indexComplexDeleteCommands = new ArrayList<>();
+        final List<ComplexIndexDeleteCommand> listIndexComplexDeleteCommands = new ArrayList<>();
 
         final List<ComplexKeyClass> complexKeyClasses = new ArrayList<>();
 
@@ -156,12 +168,19 @@ public class CacheGenerator extends AbstractGenerator {
                             map(FieldData::getGetter).
                             collect(toList());
                     ComplexIndexFillCommand complexIndexFillCommand = new ComplexIndexFillCommand(indexName, keyClassName, constructorParams);
+                    ComplexIndexUpdateCommand complexIndexUpdateCommand = new ComplexIndexUpdateCommand(indexName, keyClassName, constructorParams);
+                    ComplexIndexDeleteCommand complexIndexDeleteCommand = new ComplexIndexDeleteCommand(indexName, keyClassName, constructorParams);
 
                     if (MethodType.QUERY_SINGLE.equals(methodAnalysisData.getType())) {
                         indexComplexFillCommands.add(complexIndexFillCommand);
+                        indexComplexUpdateCommands.add(complexIndexUpdateCommand);
+                        indexComplexDeleteCommands.add(complexIndexDeleteCommand);
                     } else if (MethodType.QUERY_LIST.equals(methodAnalysisData.getType())) {
                         listIndexComplexFillCommands.add(complexIndexFillCommand);
                         additionalImports.add(ArrayList.class.getCanonicalName());
+                        listIndexComplexUpdateCommands.add(complexIndexUpdateCommand);
+                        listIndexComplexDeleteCommands.add(complexIndexDeleteCommand);
+                        additionalImports.add(CacheTools.class.getCanonicalName());
                     } else {
                         throw new RuntimeException("Unknown method type:" + methodAnalysisData.getType());
                     }
@@ -203,11 +222,18 @@ public class CacheGenerator extends AbstractGenerator {
                     queryMethods.add(prepareMethodData(methodAnalysisData, indexName));
 
                     IndexFillCommand indexFillCommand = new IndexFillCommand(matchingField.getName(), matchingField.getGetter());
+                    IndexUpdateCommand indexUpdateCommand = new IndexUpdateCommand(matchingField.getName(), matchingField.getGetter());
+                    IndexDeleteCommand indexDeleteCommand = new IndexDeleteCommand(matchingField.getName(), matchingField.getGetter());
                     if (MethodType.QUERY_SINGLE.equals(methodAnalysisData.getType())) {
                         indexFillCommands.add(indexFillCommand);
+                        indexUpdateCommands.add(indexUpdateCommand);
+                        indexDeleteCommands.add(indexDeleteCommand);
                     } else if (MethodType.QUERY_LIST.equals(methodAnalysisData.getType())) {
                         listIndexFillCommands.add(indexFillCommand);
                         additionalImports.add(ArrayList.class.getCanonicalName());
+                        listIndexUpdateCommands.add(indexUpdateCommand);
+                        listIndexDeleteCommands.add(indexDeleteCommand);
+                        additionalImports.add(CacheTools.class.getCanonicalName());
                     } else {
                         throw new RuntimeException("Unknown method type:" + methodAnalysisData.getType());
                     }
@@ -248,7 +274,14 @@ public class CacheGenerator extends AbstractGenerator {
         context.put("listIndexComplexFillCommands", listIndexComplexFillCommands);
 
         context.put("indexUpdateCommands", indexUpdateCommands);
+        context.put("listIndexUpdateCommands", listIndexUpdateCommands);
+        context.put("indexComplexUpdateCommands", indexComplexUpdateCommands);
+        context.put("listIndexComplexUpdateCommands", listIndexComplexUpdateCommands);
+
         context.put("indexDeleteCommands", indexDeleteCommands);
+        context.put("listIndexDeleteCommands", listIndexDeleteCommands);
+        context.put("indexComplexDeleteCommands", indexComplexDeleteCommands);
+        context.put("listIndexComplexDeleteCommands", listIndexComplexDeleteCommands);
 
         context.put("complexKeyClasses", complexKeyClasses);
 

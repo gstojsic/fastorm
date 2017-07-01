@@ -38,10 +38,15 @@ public class CustomerCacheManual implements CustomerCache {
     public void updateIndexes(Customer entity) {
         firstNameIndex.put(entity.getFirstName(), entity);
         CacheTools.updateOrAddToListInIndex(lastNameIndex, entity.getLastName(), entity);
+
+        firstNameAndlastNameIndex.put(new FirstNameAndLastNameKey(entity.getFirstName(), entity.getLastName()), entity);
+        //CacheTools.updateOrAddToListInIndex(firstNameAndlastNameIndex, new LastNameAndFirstNameKey(entity.getFirstName(), entity.getLastName()), entity);
     }
 
     public void deleteFromIndexes(Customer entity) {
         firstNameIndex.remove(entity.getFirstName());
+
+        firstNameAndlastNameIndex.remove(new FirstNameAndLastNameKey(entity.getFirstName(), entity.getLastName()), entity);
     }
 
     @Override

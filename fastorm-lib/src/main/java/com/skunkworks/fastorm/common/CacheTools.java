@@ -19,4 +19,11 @@ public enum CacheTools {
             indexList.add(entity);
         }
     }
+
+    public static <T, K> void removeFromListInIndex(final Map<K, List<T>> indexMap, final K key, final T entity) {
+        List<T> indexList = indexMap.computeIfAbsent(key, s -> new ArrayList<>());
+        if (indexList == null || indexList.isEmpty())
+            return;
+        indexList.remove(entity);
+    }
 }
