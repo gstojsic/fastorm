@@ -12,9 +12,9 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
-#foreach($import in $additionalImports)
+<#list additionalImports as import>
 import ${import};
-#end
+</#list>
 
 public class ${className} implements Dao<${entityName}, Long>, ${interfaceName} {
 
@@ -107,30 +107,30 @@ public class ${className} implements Dao<${entityName}, Long>, ${interfaceName} 
     //${selectColumns}
     public static ${entityName} mapToRow(ResultSet resultSet) throws SQLException {
         ${entityName} item = new ${entityName}();
-        #foreach($field in $fields)
+        <#list fields as field>
         item.${field.setter}(resultSet.get${field.recordsetType}(${field.index}));
-        #end
+        </#list>
 
         return item;
     }
 
-    #foreach($method in $queryMethods)
+    <#list queryMethods as method>
 
     @Override
     public ${method.returnType} ${method.name}(${method.parameters}) {
         throw new UnsupportedOperationException("${method.name}");
     }
-    #end
-    #foreach($method in $queryListMethods)
+    </#list>
+    <#list queryListMethods as method>
 
     @Override
     public ${method.returnType} ${method.name}(${method.parameters}) {
         try (Connection connection = dataSource.getConnection()) {
             PreparedStatement preparedStatement = connection.prepareStatement("select ${selectColumns} from ${entityName} where ${method.query}");
-            #foreach($qParam in $method.queryParameters)
+            <#list method.queryParameters as qParam>
 
             preparedStatement.set${qParam.queryParameterType}(${qParam.index}, ${qParam.methodParameterName});
-            #end
+            </#list>
 
             ResultSet resultSet = preparedStatement.executeQuery();
             List<${entityName}> items = new ArrayList<>();
@@ -142,20 +142,20 @@ public class ${className} implements Dao<${entityName}, Long>, ${interfaceName} 
             throw new RuntimeException(e);
         }
     }
-    #end
-    #foreach($method in $storedProcedureMethods)
+    </#list>
+    <#list storedProcedureMethods as method>
 
     @Override
     public ${method.returnType} ${method.name}(${method.parameters}) {
         throw new UnsupportedOperationException("${method.name}");
     }
-    #end
-    #foreach($method in $unrecognizedMethods)
+    </#list>
+    <#list unrecognizedMethods as method>
 
     @Override
     public ${method.returnType} ${method.name}(${method.parameters}) {
         throw new UnsupportedOperationException("${method.name}");
     }
-    #end
+    </#list>
 
 }

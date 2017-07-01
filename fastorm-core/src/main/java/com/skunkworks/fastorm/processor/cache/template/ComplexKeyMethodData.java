@@ -1,7 +1,6 @@
 package com.skunkworks.fastorm.processor.cache.template;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * stole on 23.06.17.
@@ -9,7 +8,7 @@ import java.util.Map;
 public class ComplexKeyMethodData {
     private final String name;
     private final String returnType;
-    private final Map<String, String> parameters;
+    private final List<TypeDeclaration> parameters;
     private final String keyName;
     private final String keyClass;
     private final List<String> constructorParams;
@@ -17,7 +16,7 @@ public class ComplexKeyMethodData {
     public ComplexKeyMethodData(
             String name,
             String returnType,
-            Map<String, String> parameters,
+            List<TypeDeclaration> parameters,
             String keyName,
             String keyClass,
             List<String> constructorParams
@@ -38,7 +37,7 @@ public class ComplexKeyMethodData {
         return returnType;
     }
 
-    public Map<String, String> getParameters() {
+    public List<TypeDeclaration> getParameters() {
         return parameters;
     }
 

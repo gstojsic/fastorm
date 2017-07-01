@@ -7,7 +7,6 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.junit.Test;
-import org.skunkworks.fastorm.parser.CacheQueryBaseListener;
 import org.skunkworks.fastorm.parser.CacheQueryLexer;
 import org.skunkworks.fastorm.parser.CacheQueryParser;
 import org.skunkworks.fastorm.parser.QueryBaseListener;

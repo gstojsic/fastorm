@@ -1,6 +1,7 @@
 package com.skunkworks.impl;
 
 import com.skunkworks.fastorm.Dao;
+import com.skunkworks.fastorm.common.CacheTools;
 import com.skunkworks.persistence.Customer;
 import com.skunkworks.persistence.CustomerCache;
 
@@ -34,6 +35,15 @@ public class CustomerCacheManual implements CustomerCache {
         }
     }
 
+    public void updateIndexes(Customer entity) {
+        firstNameIndex.put(entity.getFirstName(), entity);
+        CacheTools.updateOrAddToListInIndex(lastNameIndex, entity.getLastName(), entity);
+    }
+
+    public void deleteFromIndexes(Customer entity) {
+        firstNameIndex.remove(entity.getFirstName());
+    }
+
     @Override
     public Customer findByFirstName(String firstName) {
         return firstNameIndex.get(firstName);
@@ -47,6 +57,11 @@ public class CustomerCacheManual implements CustomerCache {
     @Override
     public Customer findByFirstNameAndLastName(String firstName, String lastName) {
         return firstNameAndlastNameIndex.get(new FirstNameAndLastNameKey(firstName, lastName));
+    }
+
+    //@Override
+    public List<Customer> findByLastNameAndFirstName(String lastName, String firstName) {
+        return null;
     }
 
 //    @Override

@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  */
 public class AbstractGenerator {
     protected final ProcessingEnvironment processingEnv;
-    private final Messager messager;
+    protected final Messager messager;
     private final Filer filer;
 
     public AbstractGenerator(ProcessingEnvironment processingEnv) {

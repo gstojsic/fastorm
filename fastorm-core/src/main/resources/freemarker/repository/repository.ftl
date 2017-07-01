@@ -10,20 +10,20 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ${className}Repository implements Repository<${className}> {
+public class ${className} implements Repository<${entityName}> {
 
     private final DataSource dataSource;
 
-    public ${className}Repository(DataSource dataSource) {
+    public ${className}(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
     @Override
-    public List<${className}> loadAll() throws Exception {
+    public List<${entityName}> loadAll() throws Exception {
         Connection connection = dataSource.getConnection();
-        CallableStatement callableStatement = connection.prepareCall("select ${selectColumns} from ${className}");
+        CallableStatement callableStatement = connection.prepareCall("select ${selectColumns} from ${entityName}");
         ResultSet resultSet = callableStatement.executeQuery();
-        List<${className}> items = new ArrayList<>();
+        List<${entityName}> items = new ArrayList<>();
         while (resultSet.next()) {
             items.add(mapToRow(resultSet));
         }
@@ -31,11 +31,11 @@ public class ${className}Repository implements Repository<${className}> {
     }
 
     //${selectColumns}
-    public static ${className} mapToRow(ResultSet resultSet) throws Exception {
-        ${className} item = new ${className}();
-        #foreach($field in $fields)
+    public static ${entityName} mapToRow(ResultSet resultSet) throws Exception {
+        ${entityName} item = new ${entityName}();
+        <#list fields as field>
         item.${field.setter}(resultSet.get${field.recordsetType}(${field.index}));
-        #end
+        </#list>
         return item;
     }
 }

@@ -1,3 +1,4 @@
+<#import "../lib/common.ftl" as lib>
 package ${packageName};
 
 import com.skunkworks.fastorm.Dao;
@@ -34,16 +35,19 @@ public class ${className} implements ${interfaceName} {
             <#list indexComplexFillCommands as command>
             ${command.indexName}Index.put(new ${command.keyClass}(<#list command.constructorParams as param>entity.${param}()<#sep>, </#list>), entity);
             </#list>
+            <#list listIndexComplexFillCommands as command>
+            ${command.indexName}Index.computeIfAbsent(new ${command.keyClass}(<#list command.constructorParams as param>entity.${param}()<#sep>, </#list>), s -> new ArrayList<>()).add(entity);
+            </#list>
         }
     }
 
-    private void updateIndexes(${entityName} entity) {
+    public void updateIndexes(${entityName} entity) {
         <#list indexUpdateCommands as command>
         //
         </#list>
     }
 
-    private void deleteFromIndexes(${entityName} entity) {
+    public void deleteFromIndexes(${entityName} entity) {
         <#list indexDeleteCommands as command>
         //
         </#list>
@@ -51,32 +55,32 @@ public class ${className} implements ${interfaceName} {
     <#list queryMethods as method>
 
     @Override
-    public ${method.returnType} ${method.name}(<#list method.parameters as name, type>${type} ${name}<#sep>, </#list>) {
+    public ${method.returnType} ${method.name}(<@lib.funcParams method.parameters/>) {
         return ${method.keyName}Index.get(${method.keyParameter});
     }
     </#list>
     <#list complexKeyQueryMethods as method>
 
     @Override
-    public ${method.returnType} ${method.name}(<#list method.parameters as name, type>${type} ${name}<#sep>, </#list>) {
-        return ${method.keyName}Index.get(new ${method.keyClass}(<#list method.constructorParams as param>${param}<#sep>, </#list>));
+    public ${method.returnType} ${method.name}(<@lib.funcParams method.parameters/>) {
+        return ${method.keyName}Index.get(new ${method.keyClass}(<@lib.paramList method.constructorParams/>));
     }
     </#list>
     <#list unrecognizedMethods as method>
 
     @Override
-    public ${method.returnType} ${method.name}(<#list method.parameters as name, type>${type} ${name}<#sep>, </#list>) {
+    public ${method.returnType} ${method.name}(<@lib.funcParams method.parameters/>) {
         throw new UnsupportedOperationException("${method.name}");
     }
     </#list>
     <#list complexKeyClasses as keyClass>
 
     private static final class ${keyClass.className} {
-        <#list keyClass.fields as name, type>
-        private final ${type} ${name};
+        <#list keyClass.fields as field>
+        private final ${field.type} ${field.name};
         </#list>
 
-        ${keyClass.className}(<#list keyClass.constructorParams as name, type>${type} ${name}<#sep>, </#list>) {
+        ${keyClass.className}(<@lib.funcParams keyClass.fields/>) {
             <#list keyClass.constructorInitializers as initializer>
             this.${initializer} = ${initializer};
             </#list>
@@ -102,7 +106,7 @@ public class ${className} implements ${interfaceName} {
 
         @Override
         public int hashCode() {
-            return Objects.hash(<#list keyClass.hashParams as param>${param}<#sep>, </#list>);
+            return Objects.hash(<@lib.paramList keyClass.hashParams/>);
         }
     }
     </#list>

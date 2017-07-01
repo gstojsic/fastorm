@@ -2,6 +2,7 @@ package com.skunkworks.fastorm.processor.dao;
 
 import com.skunkworks.fastorm.annotations.Dao;
 import com.skunkworks.fastorm.parser.query.Query;
+import com.skunkworks.fastorm.processor.AbstractGenerator;
 import com.skunkworks.fastorm.processor.dao.template.FieldData;
 import com.skunkworks.fastorm.processor.dao.template.MethodData;
 import com.skunkworks.fastorm.processor.dao.template.MethodType;
@@ -10,14 +11,9 @@ import com.skunkworks.fastorm.processor.tool.Tools;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.apache.velocity.Template;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.VelocityEngine;
 import org.skunkworks.fastorm.parser.QueryLexer;
 import org.skunkworks.fastorm.parser.QueryParser;
 
-import javax.annotation.processing.Filer;
-import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -32,33 +28,25 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.persistence.Column;
-import javax.tools.JavaFileObject;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.io.Writer;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * stole on 19.02.17.
  */
-public class DaoGenerator {
-
-    private final ProcessingEnvironment processingEnv;
-    private final Messager messager;
-    private final Filer filer;
+public class DaoGenerator extends AbstractGenerator {
+    private static final String CLASS_SUFIX = "Generated";
 
     public DaoGenerator(ProcessingEnvironment processingEnv) {
-        this.processingEnv = processingEnv;
-        messager = processingEnv.getMessager();
-        filer = processingEnv.getFiler();
+        super(processingEnv);
     }
 
     public void generateDao(Element annotatedElement) throws Exception {
@@ -118,21 +106,9 @@ public class DaoGenerator {
         }
 
         String interfaceName = annotatedElement.getSimpleName().toString();
-        String className = interfaceName + "Impl";
-        JavaFileObject jfo = filer.createSourceFile(className);
+        String className = interfaceName + CLASS_SUFIX;
 
-        Writer writer = jfo.openWriter();
-
-        Properties props = new Properties();
-        URL url = this.getClass().getClassLoader().getResource("velocity.properties");
-        if (url == null)
-            throw new RuntimeException("No properties");
-        props.load(url.openStream());
-
-        VelocityEngine ve = new VelocityEngine(props);
-        ve.init();
-
-        VelocityContext context = new VelocityContext();
+        Map<String, Object> context = new HashMap<>();
 
         PackageElement packageElement = (PackageElement) annotatedElement.getEnclosingElement();
 
@@ -157,11 +133,7 @@ public class DaoGenerator {
                 collect(Collectors.joining(", "));
         context.put("selectColumns", selectedColumns);
 
-        Template vt = ve.getTemplate("velocity/dao.vm");
-
-        vt.merge(context, writer);
-
-        writer.close();
+        write(className, "dao/dao.ftl", context);
     }
 
     private boolean isValidField(Element enclosedElement, String name) {
@@ -264,29 +236,29 @@ public class DaoGenerator {
         }
     }
 
-    private String getTypeString(TypeElement returnTypeElement, DeclaredType declaredReturnType) {
-//        for (TypeMirror tpe : declaredReturnType.getTypeArguments()) {
-//            warn("Type Parameter el:" + tpe.toString());
+//    private String getTypeString(TypeElement returnTypeElement, DeclaredType declaredReturnType) {
+////        for (TypeMirror tpe : declaredReturnType.getTypeArguments()) {
+////            warn("Type Parameter el:" + tpe.toString());
+////        }
+//        //warn("Type Parameter:" + returnTypeElement.getTypeParameters().toString());
+//        //warn(returnTypeElement.getSimpleName().toString());
+//        //warn(returnTypeElement.toString());
+//
+//        if (declaredReturnType.getTypeArguments().size() > 0) {
+//            String typeParameters = declaredReturnType.getTypeArguments().stream().
+//                    map(typeMirror -> {
+//                        TypeElement paramElement = processingEnv.getElementUtils().getTypeElement(typeMirror.toString());
+//                        return paramElement.getSimpleName().toString();
+//                        //return typeMirror.toString();
+//                    }).
+//                    collect(Collectors.joining(", "));
+//
+//            return returnTypeElement.getSimpleName().toString() +
+//                    '<' + String.join(", ", typeParameters) + '>';
+//        } else {
+//            return returnTypeElement.getSimpleName().toString();
 //        }
-        //warn("Type Parameter:" + returnTypeElement.getTypeParameters().toString());
-        //warn(returnTypeElement.getSimpleName().toString());
-        //warn(returnTypeElement.toString());
-
-        if (declaredReturnType.getTypeArguments().size() > 0) {
-            String typeParameters = declaredReturnType.getTypeArguments().stream().
-                    map(typeMirror -> {
-                        TypeElement paramElement = processingEnv.getElementUtils().getTypeElement(typeMirror.toString());
-                        return paramElement.getSimpleName().toString();
-                        //return typeMirror.toString();
-                    }).
-                    collect(Collectors.joining(", "));
-
-            return returnTypeElement.getSimpleName().toString() +
-                    '<' + String.join(", ", typeParameters) + '>';
-        } else {
-            return returnTypeElement.getSimpleName().toString();
-        }
-    }
+//    }
 
     private FieldData processField(Element field, String name, int fieldIndex) {
         //warn("element type:" + field.asType());
@@ -306,9 +278,5 @@ public class DaoGenerator {
         String columnAnnotationName = (columnAnnotation != null && !"".equals(columnAnnotation.name())) ? columnAnnotation.name() : name;
         //warn("columnAnnotationName:" + columnAnnotationName);
         return columnAnnotationName;
-    }
-
-    private void warn(String message) {
-        Tools.warn(messager, message);
     }
 }

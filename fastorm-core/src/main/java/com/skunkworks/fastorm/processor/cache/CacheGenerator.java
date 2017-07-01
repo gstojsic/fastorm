@@ -10,6 +10,7 @@ import com.skunkworks.fastorm.processor.cache.template.Index;
 import com.skunkworks.fastorm.processor.cache.template.IndexFillCommand;
 import com.skunkworks.fastorm.processor.cache.template.MethodData;
 import com.skunkworks.fastorm.processor.cache.template.MethodType;
+import com.skunkworks.fastorm.processor.cache.template.TypeDeclaration;
 import com.skunkworks.fastorm.processor.tool.Tools;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -51,6 +52,9 @@ import static java.util.stream.Collectors.*;
  * stole on 19.02.17.
  */
 public class CacheGenerator extends AbstractGenerator {
+    private static final String CLASS_SUFIX = "Generated";
+    private static final String COMPLEX_KEY_SUFIX = "Key";
+
     private Set<String> additionalImports = new HashSet<>();
 
     public CacheGenerator(ProcessingEnvironment processingEnv) {
@@ -97,6 +101,7 @@ public class CacheGenerator extends AbstractGenerator {
         final List<IndexFillCommand> listIndexFillCommands = new ArrayList<>();
 
         final List<ComplexIndexFillCommand> indexComplexFillCommands = new ArrayList<>();
+        final List<ComplexIndexFillCommand> listIndexComplexFillCommands = new ArrayList<>();
 
         final List<IndexFillCommand> indexUpdateCommands = new ArrayList<>();
         final List<IndexFillCommand> indexDeleteCommands = new ArrayList<>();
@@ -129,7 +134,7 @@ public class CacheGenerator extends AbstractGenerator {
 
                 if (keyComponents.size() > 1) {
                     // Complex Key
-                    String keyClassName = capitalizedKeyName + "Key";
+                    String keyClassName = capitalizedKeyName + COMPLEX_KEY_SUFIX;
 
                     final Index index = new Index(indexName, keyClassName, methodAnalysisData.getReturnType());
                     indexes.add(index);
@@ -155,16 +160,14 @@ public class CacheGenerator extends AbstractGenerator {
                     if (MethodType.QUERY_SINGLE.equals(methodAnalysisData.getType())) {
                         indexComplexFillCommands.add(complexIndexFillCommand);
                     } else if (MethodType.QUERY_LIST.equals(methodAnalysisData.getType())) {
-//                        listIndexFillCommands.add(indexFillCommand);
-//                        additionalImports.add(ArrayList.class.getCanonicalName());
+                        listIndexComplexFillCommands.add(complexIndexFillCommand);
+                        additionalImports.add(ArrayList.class.getCanonicalName());
                     } else {
                         throw new RuntimeException("Unknown method type:" + methodAnalysisData.getType());
                     }
-                    Map<String, String> keyConstructorParams = componentFields.stream().
-                            collect(toMap(FieldData::getName, FieldData::getType));
-
-                    Map<String, String> complexKeyFields = componentFields.stream().
-                            collect(toMap(FieldData::getName, FieldData::getType));
+                    List<TypeDeclaration> keyFields = componentFields.stream().
+                            map(field -> new TypeDeclaration(field.getName(), field.getType())).
+                            collect(toList());
 
                     //equals Items
                     Map<Boolean, List<String>> partitionByPrimitive = componentFields.stream().
@@ -179,8 +182,7 @@ public class CacheGenerator extends AbstractGenerator {
                     //Setup complex key class
                     complexKeyClasses.add(new ComplexKeyClass(
                             keyClassName,
-                            keyConstructorParams,
-                            complexKeyFields,
+                            keyFields,
                             keyComponentsLowercase,
                             partitionByPrimitive.get(true),
                             partitionByPrimitive.get(false),
@@ -215,7 +217,7 @@ public class CacheGenerator extends AbstractGenerator {
 
 
         String interfaceName = annotatedElement.getSimpleName().toString();
-        String className = interfaceName + "Generated";
+        String className = interfaceName + CLASS_SUFIX;
         PackageElement packageElement = (PackageElement) annotatedElement.getEnclosingElement();
 
         Map<String, Object> context = new HashMap<>();
@@ -243,6 +245,7 @@ public class CacheGenerator extends AbstractGenerator {
         context.put("indexFillCommands", indexFillCommands);
         context.put("listIndexFillCommands", listIndexFillCommands);
         context.put("indexComplexFillCommands", indexComplexFillCommands);
+        context.put("listIndexComplexFillCommands", listIndexComplexFillCommands);
 
         context.put("indexUpdateCommands", indexUpdateCommands);
         context.put("indexDeleteCommands", indexDeleteCommands);
@@ -251,7 +254,7 @@ public class CacheGenerator extends AbstractGenerator {
 
         context.put("unrecognizedMethods", unrecognizedMethods);
 
-        write(className, "cache/Cache.ftl", context);
+        write(className, "cache/cache.ftl", context);
     }
 
     private MethodData prepareMethodData(MethodAnalysisData methodAnalysisData, String keyName) {
@@ -315,17 +318,17 @@ public class CacheGenerator extends AbstractGenerator {
         methodData.setReturnType(getTypeString(returnTypeElement, declaredReturnType));
 
         //method parameters
-        Map<String, String> parameters = new HashMap<>();
+        List<TypeDeclaration> parameters = new ArrayList<>();
         ArrayList<String> parameterNames = new ArrayList<>();
         for (VariableElement param : method.getParameters()) {
             String methodParameterName = param.getSimpleName().toString();
             parameterNames.add(methodParameterName);
 
             if (param.asType().getKind().isPrimitive()) {
-                parameters.put(methodParameterName, param.asType().toString());
+                parameters.add(new TypeDeclaration(methodParameterName, param.asType().toString()));
             } else {
                 TypeElement paramElement = getTypeElement(param.asType().toString());
-                parameters.put(methodParameterName, paramElement.getSimpleName().toString());
+                parameters.add(new TypeDeclaration(methodParameterName, paramElement.getSimpleName().toString()));
             }
         }
         methodData.setParameters(parameters);

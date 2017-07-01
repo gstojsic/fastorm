@@ -1,9 +1,9 @@
 package com.skunkworks.fastorm.processor.cache;
 
 import com.skunkworks.fastorm.processor.cache.template.MethodType;
+import com.skunkworks.fastorm.processor.cache.template.TypeDeclaration;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * stole on 23.06.17.
@@ -11,7 +11,7 @@ import java.util.Map;
 public class MethodAnalysisData {
     private String name;
     private String returnType = "void";
-    private Map<String, String> parameters;
+    private List<TypeDeclaration> parameters;
     private MethodType type = MethodType.UNRECOGNIZED;
     private List<String> parameterNames;
     private List<String> keyComponents;
@@ -32,11 +32,11 @@ public class MethodAnalysisData {
         this.returnType = returnType;
     }
 
-    public Map<String, String> getParameters() {
+    public List<TypeDeclaration> getParameters() {
         return parameters;
     }
 
-    public void setParameters(Map<String, String> parameters) {
+    public void setParameters(List<TypeDeclaration> parameters) {
         this.parameters = parameters;
     }
 

@@ -3,9 +3,9 @@ package com.skunkworks;
 import com.skunkworks.persistence.Customer;
 import com.skunkworks.persistence.CustomerCache;
 import com.skunkworks.persistence.CustomerCacheGenerated;
-import com.skunkworks.persistence.CustomerDaoImpl;
+import com.skunkworks.persistence.CustomerDaoGenerated;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.time.StopWatch;
+import org.apache.commons.lang3.time.StopWatch;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -26,8 +26,8 @@ public class FastOrmApplication {
     private static final int ITERATIONS = 1_000_000;
 
     @Bean
-    CustomerDaoImpl customerDao(DataSource dataSource) {
-        return new CustomerDaoImpl(dataSource);
+    CustomerDaoGenerated customerDao(DataSource dataSource) {
+        return new CustomerDaoGenerated(dataSource);
     }
 
     @Bean
@@ -42,7 +42,7 @@ public class FastOrmApplication {
 
     @Bean
     public CommandLineRunner start(
-            final CustomerDaoImpl customerDao,
+            final CustomerDaoGenerated customerDao,
             final CustomerRepo customerRepo,
             final DataSource dataSource
     ) {

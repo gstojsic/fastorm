@@ -1,15 +1,13 @@
 package com.skunkworks.fastorm.processor.cache.template;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * stole on 23.06.17.
  */
 public class ComplexKeyClass {
     private final String className;
-    private final Map<String, String> constructorParams;
-    private final Map<String, String> fields;
+    private final List<TypeDeclaration> fields;
     private final List<String> constructorInitializers;
     private final List<String> primitiveEquals;
     private final List<String> nonprimitiveEquals;
@@ -17,15 +15,13 @@ public class ComplexKeyClass {
 
     public ComplexKeyClass(
             String keyClassName,
-            Map<String, String> constructorParams,
-            Map<String, String> fields,
+            List<TypeDeclaration> fields,
             List<String> constructorInitializers,
             List<String> primitiveEquals,
             List<String> nonprimitiveEquals,
             List<String> hashParams
     ) {
         this.className = keyClassName;
-        this.constructorParams = constructorParams;
         this.fields = fields;
         this.constructorInitializers = constructorInitializers;
         this.primitiveEquals = primitiveEquals;
@@ -37,11 +33,7 @@ public class ComplexKeyClass {
         return className;
     }
 
-    public Map<String, String> getConstructorParams() {
-        return constructorParams;
-    }
-
-    public Map<String, String> getFields() {
+    public List<TypeDeclaration> getFields() {
         return fields;
     }
 
@@ -65,7 +57,6 @@ public class ComplexKeyClass {
     public String toString() {
         return "ComplexKeyClass{" +
                 "className='" + className + '\'' +
-                ", constructorParams=" + constructorParams +
                 ", fields=" + fields +
                 ", constructorInitializers=" + constructorInitializers +
                 ", hashParams=" + hashParams +

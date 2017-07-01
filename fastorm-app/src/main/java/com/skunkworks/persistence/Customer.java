@@ -2,6 +2,7 @@ package com.skunkworks.persistence;
 
 import com.skunkworks.fastorm.annotations.GenerateRepository;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -13,6 +14,7 @@ import javax.persistence.Id;
 @Data
 @Entity
 @GenerateRepository
+@EqualsAndHashCode(of = "id")
 public class Customer {
 
     @Id
