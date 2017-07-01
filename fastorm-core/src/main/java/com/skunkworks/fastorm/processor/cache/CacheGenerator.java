@@ -292,17 +292,7 @@ public class CacheGenerator extends AbstractGenerator {
         String getter = getterPrefix + capitalizedName;
         String setter = "set" + capitalizedName;
 
-        final String type;
-        if (kind.isPrimitive()) {
-            type = field.asType().toString();
-        } else {
-            String canonicalType = field.asType().toString();
-            TypeElement fieldType = getTypeElement(canonicalType);
-            if (!field.asType().toString().startsWith("java.lang")) {
-                additionalImports.add(field.asType().toString());
-            }
-            type = fieldType.getSimpleName().toString();
-        }
+        final String type = getFieldType(field, additionalImports);
 
         return new FieldData(name, type, getter, setter, isId, kind.isPrimitive());
     }

@@ -28,6 +28,7 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.persistence.Column;
+import javax.persistence.Id;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -44,6 +45,8 @@ import java.util.stream.Collectors;
  */
 public class DaoGenerator extends AbstractGenerator {
     private static final String CLASS_SUFIX = "Generated";
+
+    private Set<String> additionalImports = new HashSet<>();
 
     public DaoGenerator(ProcessingEnvironment processingEnv) {
         super(processingEnv);
@@ -81,8 +84,6 @@ public class DaoGenerator extends AbstractGenerator {
                 fieldIndex++;
             }
         }
-
-        Set<String> additionalImports = new HashSet<>();
 
         //Interface Methods
         List<MethodData> queryMethods = new ArrayList<>();
@@ -122,6 +123,15 @@ public class DaoGenerator extends AbstractGenerator {
         context.put("entityName", entityName);
 
         context.put("fields", fields);
+
+        FieldData idField = fields.stream().
+                filter(FieldData::isId).
+                findFirst().orElseGet(() -> fields.stream().
+                filter(field -> "id".equals(field.getName().toLowerCase())).
+                findFirst().
+                orElseThrow(() -> new RuntimeException("Id field not found")));
+        context.put("idField", idField);
+
         context.put("queryMethods", queryMethods);
         context.put("queryListMethods", queryListMethods);
         context.put("storedProcedureMethods", storedProcedureMethods);
@@ -236,33 +246,7 @@ public class DaoGenerator extends AbstractGenerator {
         }
     }
 
-//    private String getTypeString(TypeElement returnTypeElement, DeclaredType declaredReturnType) {
-////        for (TypeMirror tpe : declaredReturnType.getTypeArguments()) {
-////            warn("Type Parameter el:" + tpe.toString());
-////        }
-//        //warn("Type Parameter:" + returnTypeElement.getTypeParameters().toString());
-//        //warn(returnTypeElement.getSimpleName().toString());
-//        //warn(returnTypeElement.toString());
-//
-//        if (declaredReturnType.getTypeArguments().size() > 0) {
-//            String typeParameters = declaredReturnType.getTypeArguments().stream().
-//                    map(typeMirror -> {
-//                        TypeElement paramElement = processingEnv.getElementUtils().getTypeElement(typeMirror.toString());
-//                        return paramElement.getSimpleName().toString();
-//                        //return typeMirror.toString();
-//                    }).
-//                    collect(Collectors.joining(", "));
-//
-//            return returnTypeElement.getSimpleName().toString() +
-//                    '<' + String.join(", ", typeParameters) + '>';
-//        } else {
-//            return returnTypeElement.getSimpleName().toString();
-//        }
-//    }
-
     private FieldData processField(Element field, String name, int fieldIndex) {
-        //warn("element type:" + field.asType());
-        //warn("element kind:" + field.asType().getKind());
 
         String columnName = getColumnName(field, name);
         String getterPrefix = field.asType().getKind().equals(TypeKind.BOOLEAN) ? "is" : "get";
@@ -270,7 +254,13 @@ public class DaoGenerator extends AbstractGenerator {
         String getter = getterPrefix + capitalizedName;
         String setter = "set" + capitalizedName;
         String recordsetType = Tools.getRecordsetType(field, messager);
-        return new FieldData(fieldIndex, name, columnName, getter, setter, recordsetType);
+
+        final String type = getFieldType(field, additionalImports);
+
+        Id idAnnotation = field.getAnnotation(Id.class);
+        boolean isId = idAnnotation != null;
+
+        return new FieldData(fieldIndex, name, type, columnName, getter, setter, recordsetType, isId);
     }
 
     private String getColumnName(Element field, String name) {

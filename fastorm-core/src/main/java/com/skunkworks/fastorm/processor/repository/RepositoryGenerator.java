@@ -1,7 +1,7 @@
 package com.skunkworks.fastorm.processor.repository;
 
 import com.skunkworks.fastorm.processor.AbstractGenerator;
-import com.skunkworks.fastorm.processor.dao.template.FieldData;
+import com.skunkworks.fastorm.processor.repository.template.FieldData;
 import com.skunkworks.fastorm.processor.tool.Tools;
 
 import javax.annotation.processing.ProcessingEnvironment;
@@ -67,6 +67,7 @@ public class RepositoryGenerator extends AbstractGenerator {
         String getter = getterPrefix + capitalizedName;
         String setter = "set" + capitalizedName;
         String recordsetType = Tools.getRecordsetType(field, messager);
+
         return new FieldData(fieldIndex, name, columnName, getter, setter, recordsetType);
     }
 

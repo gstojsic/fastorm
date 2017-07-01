@@ -16,7 +16,7 @@ import java.util.List;
 import ${import};
 </#list>
 
-public class ${className} implements Dao<${entityName}, Long>, ${interfaceName} {
+public class ${className} implements Dao<${entityName}, ${idField.type}>, ${interfaceName} {
 
     private final DataSource dataSource;
 
@@ -35,10 +35,10 @@ public class ${className} implements Dao<${entityName}, Long>, ${interfaceName} 
     }
 
     @Override
-    public ${entityName} findOne(Long id) {
+    public ${entityName} findOne(${idField.type} id) {
         try (Connection connection = dataSource.getConnection()) {
             PreparedStatement preparedStatement = connection.prepareStatement("select ${selectColumns} from ${entityName}");
-            preparedStatement.setLong(0, id);
+            preparedStatement.set${idField.recordsetType}(0, id);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 return mapToRow(resultSet);
@@ -50,7 +50,7 @@ public class ${className} implements Dao<${entityName}, Long>, ${interfaceName} 
     }
 
     @Override
-    public boolean exists(Long id) {
+    public boolean exists(${idField.type} id) {
         return false;
     }
 
@@ -70,7 +70,7 @@ public class ${className} implements Dao<${entityName}, Long>, ${interfaceName} 
     }
 
     @Override
-    public List<${entityName}> findAll(Iterable<Long> ids) {
+    public List<${entityName}> findAll(Iterable<${idField.type}> ids) {
         return null;
     }
 
@@ -80,7 +80,7 @@ public class ${className} implements Dao<${entityName}, Long>, ${interfaceName} 
     }
 
     @Override
-    public void delete(Long id) {
+    public void delete(${idField.type} id) {
 
     }
 
