@@ -1,9 +1,7 @@
 package com.skunkworks;
 
-import com.skunkworks.fastorm.annotations.GenerateSpringCacheConfig;
-import com.skunkworks.fastorm.annotations.GenerateSpringDaoConfig;
+import com.skunkworks.fastorm.annotations.GenerateFastOrmConfig;
 import com.skunkworks.persistence.cache.CustomerCache;
-import com.skunkworks.persistence.cache.CustomerCacheGenerated;
 import com.skunkworks.persistence.dao.CustomerDaoGenerated;
 import com.skunkworks.persistence.entity.Customer;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +15,7 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import javax.sql.DataSource;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 /**
@@ -24,15 +23,17 @@ import java.util.function.Function;
  */
 @SpringBootApplication
 @Slf4j
-@GenerateSpringCacheConfig
-@GenerateSpringDaoConfig
+@GenerateFastOrmConfig
+//@Import(com.skunkworks.FastOrmConfig.class)
 public class FastOrmApplication {
     private static final int ITERATIONS = 1_000_000;
+    private static final int TEST_ITERATIONS = 6;
+    private static final int WARMUP_ITERATIONS = 2;
 
-    @Bean
-    CustomerDaoGenerated customerDao(DataSource dataSource) {
-        return new CustomerDaoGenerated(dataSource);
-    }
+//    @Bean
+//    CustomerDaoGenerated customerDao(DataSource dataSource) {
+//        return new CustomerDaoGenerated(dataSource);
+//    }
 
     @Bean
     @ConfigurationProperties(prefix = "datasource")
@@ -48,6 +49,7 @@ public class FastOrmApplication {
     public CommandLineRunner start(
             final CustomerDaoGenerated customerDao,
             final CustomerRepo customerRepo,
+            final CustomerCache customerCache,
             final DataSource dataSource
     ) {
         return (args) -> {
@@ -69,88 +71,48 @@ public class FastOrmApplication {
                 log.info("customers size:" + customers.size());
             }
 
+            List<Customer> loadedFastOrm = null;
+            Iterable<Customer> loadedSpring = null;
+            for (int i = 0; i < WARMUP_ITERATIONS; i++) {
+                customerDao.findAll();
+                customerRepo.findAll();
+            }
 
-            List<Customer> loadedFastOrm = measureTime(t -> {
-                try {
-                    return customerDao.findAll();
-                } catch (Exception e) {
-                    return null;
-                }
-            }, "LoadAll fastOrm");
+            AtomicLong sumFastOrmTime = new AtomicLong(0);
+            AtomicLong sumSpringTime = new AtomicLong(0);
+            for (int i = 0; i < TEST_ITERATIONS; i++) {
+                System.gc();
+                loadedFastOrm = measureTime(t -> {
+                            try {
+                                return customerDao.findAll();
+                            } catch (Exception e) {
+                                return null;
+                            }
+                        },
+                        "LoadAll fastOrm",
+                        sumFastOrmTime
+                );
 
-            Iterable<Customer> loadedSpring = measureTime(t -> {
-                try {
-                    return customerRepo.findAll();
-                } catch (Exception e) {
-                    return null;
-                }
-            }, "LoadAll spring");
+                System.gc();
+                loadedSpring = measureTime(t -> {
+                            try {
+                                return customerRepo.findAll();
+                            } catch (Exception e) {
+                                return null;
+                            }
+                        },
+                        "LoadAll spring",
+                        sumSpringTime
+                );
+            }
+            double fastOrmAverage = (.0D + sumFastOrmTime.get()) / TEST_ITERATIONS;
+            double springAverage = (.0D + sumSpringTime.get()) / TEST_ITERATIONS;
 
-            loadedFastOrm = measureTime(t -> {
-                try {
-                    return customerDao.findAll();
-                } catch (Exception e) {
-                    return null;
-                }
-            }, "LoadAll fastOrm");
+            log.info("Average fastOrm:" + fastOrmAverage);
+            log.info("Average spring:" + springAverage);
+            log.info("Ratio (spring/fastOrm):" + (springAverage / fastOrmAverage));
 
-            loadedSpring = measureTime(t -> {
-                try {
-                    return customerRepo.findAll();
-                } catch (Exception e) {
-                    return null;
-                }
-            }, "LoadAll spring");
-
-            loadedFastOrm = measureTime(t -> {
-                try {
-                    return customerDao.findAll();
-                } catch (Exception e) {
-                    return null;
-                }
-            }, "LoadAll fastOrm");
-
-            loadedSpring = measureTime(t -> {
-                try {
-                    return customerRepo.findAll();
-                } catch (Exception e) {
-                    return null;
-                }
-            }, "LoadAll spring");
-
-            loadedFastOrm = measureTime(t -> {
-                try {
-                    return customerDao.findAll();
-                } catch (Exception e) {
-                    return null;
-                }
-            }, "LoadAll fastOrm");
-
-            loadedSpring = measureTime(t -> {
-                try {
-                    return customerRepo.findAll();
-                } catch (Exception e) {
-                    return null;
-                }
-            }, "LoadAll spring");
-
-            loadedFastOrm = measureTime(t -> {
-                try {
-                    return customerDao.findAll();
-                } catch (Exception e) {
-                    return null;
-                }
-            }, "LoadAll fastOrm");
-
-            loadedSpring = measureTime(t -> {
-                try {
-                    return customerRepo.findAll();
-                } catch (Exception e) {
-                    return null;
-                }
-            }, "LoadAll spring");
-
-            CustomerCache customerCache = new CustomerCacheGenerated(customerDao);
+            //CustomerCache customerCache = new CustomerCacheGenerated(customerDao);
             Customer customer = customerCache.findByFirstName("Ivo233232");
             if (customer != null) {
                 log.info("Customer found:" + customer);
@@ -162,12 +124,14 @@ public class FastOrmApplication {
         };
     }
 
-    private <T, R> R measureTime(Function<T, R> function, String message) throws Exception {
+    private <T, R> R measureTime(Function<T, R> function, String message, AtomicLong sumTime) throws Exception {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         R result = function.apply(null);
         stopWatch.stop();
-        log.info(message + ":" + stopWatch.getTime());
+        long time = stopWatch.getTime();
+        log.info(message + ":" + time);
+        sumTime.addAndGet(time);
         return result;
     }
 }

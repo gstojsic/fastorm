@@ -63,7 +63,7 @@ public class RepositoryGenerator extends AbstractGenerator {
 
         String columnName = getColumnName(field, name);
         String getterPrefix = field.asType().getKind().equals(TypeKind.BOOLEAN) ? "is" : "get";
-        String capitalizedName = name.substring(0, 1).toUpperCase() + name.substring(1);
+        String capitalizedName = Tools.capitalizeFirstLetter(name);
         String getter = getterPrefix + capitalizedName;
         String setter = "set" + capitalizedName;
         String recordsetType = Tools.getRecordsetType(field, messager);

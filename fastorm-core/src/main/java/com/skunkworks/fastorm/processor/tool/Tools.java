@@ -1,11 +1,16 @@
 package com.skunkworks.fastorm.processor.tool;
 
 import javax.annotation.processing.Messager;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeKind;
 import javax.tools.Diagnostic;
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 
 /**
  * stole on 19.02.17.
@@ -42,6 +47,21 @@ public enum Tools {
         return rightElement.getEnclosingElement().getKind() == ElementKind.PACKAGE &&
                 leftElement.getEnclosingElement().getKind() == ElementKind.PACKAGE &&
                 !rightElement.getEnclosingElement().toString().equals(leftElement.getEnclosingElement().toString());
+    }
+
+    public static AnnotationValue getAnnotationData(AnnotationMirror annotationMirror, String itemName) {
+        for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : annotationMirror.getElementValues().entrySet()) {
+            if (itemName.equals(entry.getKey().getSimpleName().toString())) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
+    public static AnnotationMirror findAnnotation(List<? extends AnnotationMirror> annotationMirrors, Class<?> annotationClass) {
+        return annotationMirrors.stream().
+                filter(annotationMirror -> annotationClass.getName().equals(annotationMirror.getAnnotationType().toString())).
+                findFirst().orElse(null);
     }
 
     public static void warn(Messager messager, String message) {

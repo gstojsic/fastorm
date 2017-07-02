@@ -111,7 +111,7 @@ public class DaoGenerator extends AbstractGenerator {
         }
 
         String interfaceName = annotatedElement.getSimpleName().toString();
-        String className = interfaceName + CLASS_SUFIX;
+        String className = getGeneratedClassName(interfaceName);
 
         Map<String, Object> context = new HashMap<>();
 
@@ -148,6 +148,10 @@ public class DaoGenerator extends AbstractGenerator {
         context.put("selectColumns", selectedColumns);
 
         write(className, "dao/dao.ftl", context);
+    }
+
+    public static String getGeneratedClassName(String interfaceName) {
+        return interfaceName + CLASS_SUFIX;
     }
 
     private boolean isValidField(Element enclosedElement, String name) {
@@ -254,7 +258,7 @@ public class DaoGenerator extends AbstractGenerator {
 
         String columnName = getColumnName(field, name);
         String getterPrefix = field.asType().getKind().equals(TypeKind.BOOLEAN) ? "is" : "get";
-        String capitalizedName = name.substring(0, 1).toUpperCase() + name.substring(1);
+        String capitalizedName = Tools.capitalizeFirstLetter(name);
         String getter = getterPrefix + capitalizedName;
         String setter = "set" + capitalizedName;
         String recordsetType = Tools.getRecordsetType(field, messager);
