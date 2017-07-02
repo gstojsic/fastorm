@@ -1,3 +1,4 @@
 com.skunkworks.fastorm.processor.RepositoryProcessor
 com.skunkworks.fastorm.processor.DaoProcessor
 com.skunkworks.fastorm.processor.CacheProcessor
+com.skunkworks.fastorm.processor.SpringConfigProcessor

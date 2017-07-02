@@ -14,6 +14,7 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.JavaFileObject;
 import java.io.Writer;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -33,14 +34,15 @@ public class AbstractGenerator {
     }
 
     protected void write(String filename, String templatePath, Map<String, Object> context) throws Exception {
+        //Logger.selectLoggerLibrary(Logger.LIBRARY_NONE); //Disable logging
         JavaFileObject jfo = filer.createSourceFile(filename);
-        //warn("AbstractGenerator::write");
         try (Writer writer = jfo.openWriter()) {
             Configuration cfg = new Configuration(Configuration.VERSION_2_3_26);
             cfg.setClassForTemplateLoading(getClass(), "/freemarker");
             cfg.setDefaultEncoding("UTF-8");
             cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
             cfg.setLogTemplateExceptions(false);
+            cfg.setLocale(Locale.ROOT);
 
             freemarker.template.Template temp = cfg.getTemplate(templatePath);
             temp.process(context, writer);

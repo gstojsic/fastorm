@@ -1,4 +1,4 @@
-package com.skunkworks.persistence;
+package com.skunkworks.persistence.entity;
 
 import com.skunkworks.fastorm.annotations.GenerateRepository;
 import lombok.Data;

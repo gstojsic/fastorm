@@ -2,8 +2,8 @@ package com.skunkworks.impl;
 
 import com.skunkworks.fastorm.Dao;
 import com.skunkworks.fastorm.common.CacheTools;
-import com.skunkworks.persistence.Customer;
-import com.skunkworks.persistence.CustomerCache;
+import com.skunkworks.persistence.cache.CustomerCache;
+import com.skunkworks.persistence.entity.Customer;
 
 import java.util.ArrayList;
 import java.util.HashMap;

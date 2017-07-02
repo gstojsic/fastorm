@@ -9,6 +9,6 @@ import java.lang.annotation.Target;
  * stole on 21.01.17.
  */
 @Target(ElementType.TYPE)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.SOURCE)
 public @interface GenerateRepository {
 }

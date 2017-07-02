@@ -1,7 +1,7 @@
 package com.skunkworks.impl;
 
 
-import com.skunkworks.persistence.Customer;
+import com.skunkworks.persistence.entity.Customer;
 
 import java.util.AbstractList;
 import java.util.Arrays;

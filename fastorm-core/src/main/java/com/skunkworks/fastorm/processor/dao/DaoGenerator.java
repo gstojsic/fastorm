@@ -74,6 +74,10 @@ public class DaoGenerator extends AbstractGenerator {
         TypeMirror daoMirror = (TypeMirror) daoValue.getValue();
         TypeElement daoValueElement = processingEnv.getElementUtils().getTypeElement(daoMirror.toString());
 
+        if (Tools.isFromSamePackage(annotatedElement, daoValueElement)) {
+            additionalImports.add(daoValueElement.getQualifiedName().toString());
+        }
+
         List<FieldData> fields = new ArrayList<>();
         int fieldIndex = 1;
         for (Element enclosedElement : daoValueElement.getEnclosedElements()) {

@@ -11,6 +11,6 @@ import java.lang.annotation.Target;
  * stole on 18.02.17.
  */
 @Target(ElementType.METHOD)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.SOURCE)
 public @interface Query {
 }

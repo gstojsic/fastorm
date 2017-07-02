@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * stole on 18.02.17.
  */
 @Target(ElementType.TYPE)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.SOURCE)
 public @interface Cache {
     Class<?> value();
 }

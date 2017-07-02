@@ -2,6 +2,7 @@ package com.skunkworks.fastorm.processor.tool;
 
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.type.TypeKind;
 import javax.tools.Diagnostic;
 import java.math.BigDecimal;
@@ -35,6 +36,12 @@ public enum Tools {
 
         error(messager, "Unrecognized type:" + element.asType());
         return null;
+    }
+
+    public static boolean isFromSamePackage(Element leftElement, Element rightElement) {
+        return rightElement.getEnclosingElement().getKind() == ElementKind.PACKAGE &&
+                leftElement.getEnclosingElement().getKind() == ElementKind.PACKAGE &&
+                !rightElement.getEnclosingElement().toString().equals(leftElement.getEnclosingElement().toString());
     }
 
     public static void warn(Messager messager, String message) {

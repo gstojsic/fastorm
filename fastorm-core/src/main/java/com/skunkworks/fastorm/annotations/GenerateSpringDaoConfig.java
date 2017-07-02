@@ -6,13 +6,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Generates Dao classes
- *
- * stole on 29.01.17.
+ * TODO: Implement functionality
+ * <p>
+ * stole on 02.07.17.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.SOURCE)
-public @interface Dao {
+public @interface GenerateSpringDaoConfig {
 
-    Class<?> value();
+    String value() default "DaoConfig";
 }

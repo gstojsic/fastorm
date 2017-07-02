@@ -87,6 +87,10 @@ public class CacheGenerator extends AbstractGenerator {
         TypeMirror cacheMirror = (TypeMirror) cacheValue.getValue();
         TypeElement cacheValueElement = getTypeElement(cacheMirror.toString());
 
+        if (Tools.isFromSamePackage(annotatedElement, cacheValueElement)) {
+            additionalImports.add(cacheValueElement.getQualifiedName().toString());
+        }
+
         List<FieldData> fields = cacheValueElement.getEnclosedElements().stream().
                 filter(element -> element.getKind().isField()).
                 filter(element -> !"DEFAULT_VALUE".equals(element.getSimpleName().toString())).

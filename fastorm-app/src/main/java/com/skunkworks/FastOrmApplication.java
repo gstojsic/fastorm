@@ -1,9 +1,11 @@
 package com.skunkworks;
 
-import com.skunkworks.persistence.Customer;
-import com.skunkworks.persistence.CustomerCache;
-import com.skunkworks.persistence.CustomerCacheGenerated;
-import com.skunkworks.persistence.CustomerDaoGenerated;
+import com.skunkworks.fastorm.annotations.GenerateSpringCacheConfig;
+import com.skunkworks.fastorm.annotations.GenerateSpringDaoConfig;
+import com.skunkworks.persistence.cache.CustomerCache;
+import com.skunkworks.persistence.cache.CustomerCacheGenerated;
+import com.skunkworks.persistence.dao.CustomerDaoGenerated;
+import com.skunkworks.persistence.entity.Customer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
 import org.springframework.boot.CommandLineRunner;
@@ -22,6 +24,8 @@ import java.util.function.Function;
  */
 @SpringBootApplication
 @Slf4j
+@GenerateSpringCacheConfig
+@GenerateSpringDaoConfig
 public class FastOrmApplication {
     private static final int ITERATIONS = 1_000_000;
 

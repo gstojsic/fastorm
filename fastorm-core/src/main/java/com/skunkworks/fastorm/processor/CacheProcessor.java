@@ -4,7 +4,6 @@ import com.skunkworks.fastorm.annotations.Cache;
 import com.skunkworks.fastorm.processor.cache.CacheGenerator;
 
 import javax.annotation.processing.AbstractProcessor;
-import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
@@ -21,20 +20,18 @@ import java.util.Set;
  */
 public class CacheProcessor extends AbstractProcessor {
     private Messager messager;
-    private Filer filer;
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
         messager = processingEnv.getMessager();
-        filer = processingEnv.getFiler();
     }
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnvironment) {
 
         for (Element annotatedElement : roundEnvironment.getElementsAnnotatedWith(Cache.class)) {
-            // Check if a class has been annotated with @Cache
+            // Check if an interface has been annotated with @Cache
             if (annotatedElement.getKind() != ElementKind.INTERFACE) {
                 error(annotatedElement, "Only interfaces can be annotated with @%s", Cache.class.getSimpleName());
                 return true; // Exit processing

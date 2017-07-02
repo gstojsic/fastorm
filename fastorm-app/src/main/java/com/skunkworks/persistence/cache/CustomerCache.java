@@ -1,6 +1,7 @@
-package com.skunkworks.persistence;
+package com.skunkworks.persistence.cache;
 
 import com.skunkworks.fastorm.annotations.Cache;
+import com.skunkworks.persistence.entity.Customer;
 
 import java.util.List;
 

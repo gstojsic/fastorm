@@ -1,6 +1,7 @@
-package com.skunkworks.persistence;
+package com.skunkworks.persistence.dao;
 
 import com.skunkworks.fastorm.annotations.Dao;
+import com.skunkworks.persistence.entity.Customer;
 
 import java.util.List;
 
