@@ -53,18 +53,10 @@ public class DaoGenerator extends AbstractGenerator {
     }
 
     public void generateDao(Element annotatedElement) throws Exception {
-        final String daoName = Dao.class.getName();
-        AnnotationValue daoValue = null;
-        for (AnnotationMirror am : annotatedElement.getAnnotationMirrors()) {
-            if (daoName.equals(am.getAnnotationType().toString())) {
-                for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : am.getElementValues().entrySet()) {
-                    if ("value".equals(entry.getKey().getSimpleName().toString())) {
-                        daoValue = entry.getValue();
-                        break;
-                    }
-                }
-            }
-        }
+        AnnotationMirror daoAnnotation =
+                Tools.findAnnotation(annotatedElement.getAnnotationMirrors(), Dao.class);
+
+        AnnotationValue daoValue = Tools.getAnnotationData(daoAnnotation, "value");
 
         if (daoValue == null) {
             //no value, nothing to do.
@@ -116,9 +108,6 @@ public class DaoGenerator extends AbstractGenerator {
         Map<String, Object> context = new HashMap<>();
 
         PackageElement packageElement = (PackageElement) annotatedElement.getEnclosingElement();
-
-        //warn("package element:" + packageElement.toString());
-        //warn("daoValueElement element:" + daoValueElement.toString());
 
         context.put("packageName", packageElement.getQualifiedName().toString());
         context.put("interfaceName", interfaceName);

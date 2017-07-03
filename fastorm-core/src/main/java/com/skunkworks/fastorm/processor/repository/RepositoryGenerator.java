@@ -29,8 +29,6 @@ public class RepositoryGenerator extends AbstractGenerator {
 
         PackageElement packageElement = (PackageElement) annotatedElement.getEnclosingElement();
 
-        //warn("package element:" + packageElement.toString());
-
         String entityName = annotatedElement.getSimpleName().toString();
         String className = entityName + CLASS_SUFIX;
         Map<String, Object> context = new HashMap<>();
@@ -73,8 +71,6 @@ public class RepositoryGenerator extends AbstractGenerator {
 
     private String getColumnName(Element field, String name) {
         Column columnAnnotation = field.getAnnotation(Column.class);
-        String columnAnnotationName = (columnAnnotation != null && !"".equals(columnAnnotation.name())) ? columnAnnotation.name() : name;
-        //warn("columnAnnotationName:" + columnAnnotationName);
-        return columnAnnotationName;
+        return (columnAnnotation != null && !"".equals(columnAnnotation.name())) ? columnAnnotation.name() : name;
     }
 }

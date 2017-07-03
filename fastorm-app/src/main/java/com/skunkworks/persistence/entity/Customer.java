@@ -18,7 +18,6 @@ import javax.persistence.Id;
 public class Customer {
 
     @Id
-    //@GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "firstname")
@@ -26,7 +25,4 @@ public class Customer {
 
     @Column(name = "lastname")
     private String lastName;
-
-//    @Column(name = "address")
-//    private long address;
 }

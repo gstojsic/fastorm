@@ -19,3 +19,11 @@ select count(*) from customer
 
 select firstname from customer
 select * from customer
+
+create table if not exists Person (
+    id     bigint primary key,
+    firstName    varchar(100),
+    lastName    varchar(100),
+    age    integer,
+    married    boolean
+);

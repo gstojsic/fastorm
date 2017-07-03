@@ -67,18 +67,10 @@ public class CacheGenerator extends AbstractGenerator {
     }
 
     public void generateCache(Element annotatedElement) throws Exception {
-        final String cacheName = Cache.class.getName();
-        AnnotationValue cacheValue = null;
-        for (AnnotationMirror am : annotatedElement.getAnnotationMirrors()) {
-            if (cacheName.equals(am.getAnnotationType().toString())) {
-                for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : am.getElementValues().entrySet()) {
-                    if ("value".equals(entry.getKey().getSimpleName().toString())) {
-                        cacheValue = entry.getValue();
-                        break;
-                    }
-                }
-            }
-        }
+        AnnotationMirror cacheAnnotation =
+                Tools.findAnnotation(annotatedElement.getAnnotationMirrors(), Cache.class);
+
+        AnnotationValue cacheValue = Tools.getAnnotationData(cacheAnnotation, "value");
 
         if (cacheValue == null) {
             return;
