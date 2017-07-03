@@ -37,8 +37,8 @@ public class ${className} implements Dao<${entityName}, ${idField.type}>, ${inte
     @Override
     public ${entityName} findOne(${idField.type} id) {
         try (Connection connection = dataSource.getConnection()) {
-            PreparedStatement preparedStatement = connection.prepareStatement("select ${selectColumns} from ${entityName}");
-            preparedStatement.set${idField.recordsetType}(0, id);
+            PreparedStatement preparedStatement = connection.prepareStatement("select ${selectColumns} from ${entityName} where ${idField.columnName} = ?");
+            preparedStatement.set${idField.recordsetType}(1, id);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 return mapToRow(resultSet);
@@ -51,7 +51,14 @@ public class ${className} implements Dao<${entityName}, ${idField.type}>, ${inte
 
     @Override
     public boolean exists(${idField.type} id) {
-        return false;
+        try (Connection connection = dataSource.getConnection()) {
+            PreparedStatement preparedStatement = connection.prepareStatement("select 1 from ${entityName} where ${idField.columnName} = ?");
+            preparedStatement.set${idField.recordsetType}(1, id);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            return resultSet.next();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -76,17 +83,34 @@ public class ${className} implements Dao<${entityName}, ${idField.type}>, ${inte
 
     @Override
     public long count() {
-        return 0;
+        try (Connection connection = dataSource.getConnection()) {
+            PreparedStatement preparedStatement = connection.prepareStatement("select count(*) from ${entityName}");
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getLong(1);
+            } else
+                return 0L;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void delete(${idField.type} id) {
-
+        try (Connection connection = dataSource.getConnection()) {
+            PreparedStatement preparedStatement = connection.prepareStatement("delete from ${entityName} where ${idField.columnName} = ?");
+            preparedStatement.set${idField.recordsetType}(1, id);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void delete(${entityName} entity) {
-
+        if (entity.${idField.getter}() != null) {
+            delete(entity.${idField.getter}());
+        }
     }
 
     @Override
@@ -128,7 +152,6 @@ public class ${className} implements Dao<${entityName}, ${idField.type}>, ${inte
         try (Connection connection = dataSource.getConnection()) {
             PreparedStatement preparedStatement = connection.prepareStatement("select ${selectColumns} from ${entityName} where ${method.query}");
             <#list method.queryParameters as qParam>
-
             preparedStatement.set${qParam.queryParameterType}(${qParam.index}, ${qParam.methodParameterName});
             </#list>
 
