@@ -1,22 +1,30 @@
 package com.skunkworks;
 
-import com.skunkworks.fastorm.annotations.GenerateFastOrmConfig;
-import com.skunkworks.persistence.cache.CustomerCache;
-import com.skunkworks.persistence.dao.CustomerDaoGenerated;
-import com.skunkworks.persistence.entity.Customer;
-import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+
+import javax.sql.DataSource;
+
 import org.apache.commons.lang3.time.StopWatch;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
-import javax.sql.DataSource;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Function;
+import com.skunkworks.fastorm.annotations.GenerateFastOrmConfig;
+import com.skunkworks.persistence.cache.CustomerCache;
+import com.skunkworks.persistence.dao.CustomerDaoGenerated;
+import com.skunkworks.persistence.entity.Customer;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * stole on 11.12.16.
@@ -30,11 +38,6 @@ public class FastOrmApplication {
     private static final int TEST_ITERATIONS = 6;
     private static final int WARMUP_ITERATIONS = 2;
 
-//    @Bean
-//    CustomerDaoGenerated customerDao(DataSource dataSource) {
-//        return new CustomerDaoGenerated(dataSource);
-//    }
-
     @Bean
     @ConfigurationProperties(prefix = "datasource")
     DataSource dataSource() {
@@ -47,24 +50,15 @@ public class FastOrmApplication {
 
     @Bean
     public CommandLineRunner start(
+            final ApplicationContext ctx,
             final CustomerDaoGenerated customerDao,
             final CustomerRepo customerRepo,
             final CustomerCache customerCache,
             final DataSource dataSource
     ) {
         return (args) -> {
-//            customerRepo.deleteAll();
-//            List<Customer> customers = new ArrayList<>(ITERATIONS);
-//            for (long i = 1; i <= ITERATIONS; i++) {
-//                Customer customer = new Customer();
-//                customer.setId(i);
-//                customer.setFirstName("Ivo" + i);
-//                customer.setLastName("Ivic" + i);
-//                customers.add(customer);
-//            }
-//            customerRepo.save(customers);
-//
-            //loadTest(dataSource);
+            startupLog(ctx);
+            //createData(customerRepo);
 
             List<Customer> customers = customerDao.findByFirstNameAndLastName("Ivo22", "Ivic22");
             if (customers != null) {
@@ -82,25 +76,15 @@ public class FastOrmApplication {
             AtomicLong sumSpringTime = new AtomicLong(0);
             for (int i = 0; i < TEST_ITERATIONS; i++) {
                 System.gc();
-                loadedFastOrm = measureTime(t -> {
-                            try {
-                                return customerDao.findAll();
-                            } catch (Exception e) {
-                                return null;
-                            }
-                        },
+                loadedFastOrm = measureTime(
+                        () -> loadCustomersFastOrm(customerDao),
                         "LoadAll fastOrm",
                         sumFastOrmTime
                 );
 
                 System.gc();
-                loadedSpring = measureTime(t -> {
-                            try {
-                                return customerRepo.findAll();
-                            } catch (Exception e) {
-                                return null;
-                            }
-                        },
+                loadedSpring = measureTime(
+                        () -> loadCustomersSpring(customerRepo),
                         "LoadAll spring",
                         sumSpringTime
                 );
@@ -124,10 +108,49 @@ public class FastOrmApplication {
         };
     }
 
-    private <T, R> R measureTime(Function<T, R> function, String message, AtomicLong sumTime) throws Exception {
+    private List<Customer> loadCustomersFastOrm(CustomerDaoGenerated customerDao) {
+        try {
+            return customerDao.findAll();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private Iterable<Customer> loadCustomersSpring(CustomerRepo customerRepo) {
+        try {
+            return customerRepo.findAll();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void startupLog(ApplicationContext ctx) {
+        Environment environment = ctx.getEnvironment();
+        log.info("Environment: " + environment.toString());
+
+        Stream<String> beanNames = Arrays.stream(ctx.getBeanDefinitionNames()).sorted();
+        log.info("= BEANS ========================================================================");
+        beanNames.forEach(beanName -> log.info(beanName + ", class:" + ctx.getBean(beanName).getClass().getName()));
+        log.info("================================================================================");
+    }
+
+    private void createData(CustomerRepo customerRepo) {
+        customerRepo.deleteAll();
+        List<Customer> customers = new ArrayList<>(ITERATIONS);
+        for (long i = 1; i <= ITERATIONS; i++) {
+            Customer customer = new Customer();
+            customer.setId(i);
+            customer.setFirstName("Ivo" + i);
+            customer.setLastName("Ivic" + i);
+            customers.add(customer);
+        }
+        customerRepo.save(customers);
+    }
+
+    private <R> R measureTime(Supplier<R> supplier, String message, AtomicLong sumTime) throws Exception {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-        R result = function.apply(null);
+        R result = supplier.get();
         stopWatch.stop();
         long time = stopWatch.getTime();
         log.info(message + ":" + time);
