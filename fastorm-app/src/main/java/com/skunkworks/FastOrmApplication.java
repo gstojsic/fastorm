@@ -1,15 +1,10 @@
 package com.skunkworks;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
-
-import javax.sql.DataSource;
-
-import org.apache.commons.lang3.time.StopWatch;
+import com.skunkworks.fastorm.annotations.GenerateFastOrmConfig;
+import com.skunkworks.persistence.cache.CustomerCache;
+import com.skunkworks.persistence.dao.CustomerDaoGenerated;
+import com.skunkworks.persistence.entity.Customer;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -19,12 +14,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
-import com.skunkworks.fastorm.annotations.GenerateFastOrmConfig;
-import com.skunkworks.persistence.cache.CustomerCache;
-import com.skunkworks.persistence.dao.CustomerDaoGenerated;
-import com.skunkworks.persistence.entity.Customer;
-
-import lombok.extern.slf4j.Slf4j;
+import javax.sql.DataSource;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
 
 /**
  * stole on 11.12.16.
@@ -76,14 +71,14 @@ public class FastOrmApplication {
             AtomicLong sumSpringTime = new AtomicLong(0);
             for (int i = 0; i < TEST_ITERATIONS; i++) {
                 System.gc();
-                loadedFastOrm = measureTime(
+                loadedFastOrm = Utils.measureTime(
                         () -> loadCustomersFastOrm(customerDao),
                         "LoadAll fastOrm",
                         sumFastOrmTime
                 );
 
                 System.gc();
-                loadedSpring = measureTime(
+                loadedSpring = Utils.measureTime(
                         () -> loadCustomersSpring(customerRepo),
                         "LoadAll spring",
                         sumSpringTime
@@ -145,16 +140,5 @@ public class FastOrmApplication {
             customers.add(customer);
         }
         customerRepo.save(customers);
-    }
-
-    private <R> R measureTime(Supplier<R> supplier, String message, AtomicLong sumTime) throws Exception {
-        StopWatch stopWatch = new StopWatch();
-        stopWatch.start();
-        R result = supplier.get();
-        stopWatch.stop();
-        long time = stopWatch.getTime();
-        log.info(message + ":" + time);
-        sumTime.addAndGet(time);
-        return result;
     }
 }
