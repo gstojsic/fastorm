@@ -1,12 +1,14 @@
 package com.skunkworks;
 
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+@Slf4j
 public class HashTest {
 
     @Test
@@ -18,57 +20,76 @@ public class HashTest {
             keySeeds.add(new HashKey("1234_" + i, iterations + i, i));
         }
 
+        HashMap<String, HashKey> warmupStrPut = stringHashkeyPut(keySeeds, iterations);
+        HashMap<HashKey, HashKey> warmupValuePut = valueHashkeyPut(keySeeds, iterations);
+
         System.gc();
         HashMap<String, HashKey> stringsToHashKey = Utils.measureTime(
-                () -> {
-                    HashMap<String, HashKey> stringMap = new HashMap<>(iterations);
-                    for (HashKey seed : keySeeds) {
-                        String key = seed.getDestination() + seed.getSequenceId() + seed.getGatewayId();
-                        stringMap.put(key, seed);
-                    }
-                    return stringMap;
-                },
+                () -> stringHashkeyPut(keySeeds, iterations),
                 "strings insert"
         );
 
         System.gc();
         HashMap<HashKey, HashKey> values = Utils.measureTime(
-                () -> {
-                    HashMap<HashKey, HashKey> valueMap = new HashMap<>(iterations);
-                    for (HashKey seed : keySeeds) {
-                        HashKey key = new HashKey(seed.getDestination(), seed.getSequenceId(), seed.getGatewayId());
-                        valueMap.put(key, seed);
-                    }
-                    return valueMap;
-                },
+                () -> valueHashkeyPut(keySeeds, iterations),
                 "values insert"
         );
 
+        List<HashKey> warmupStrGet = stringHashkeyGet(stringsToHashKey, keySeeds, iterations);
+        List<HashKey> warmupValueGet = valueHashkeyGet(values, keySeeds, iterations);
+
         System.gc();
         Utils.measureTime(
-                () -> {
-                    List<HashKey> hashKeys = new ArrayList<>(iterations);
-                    for (HashKey seed : keySeeds) {
-                        String key = seed.getDestination() + seed.getSequenceId() + seed.getGatewayId();
-                        hashKeys.add(stringsToHashKey.get(key));
-                    }
-                    return hashKeys;
-                },
+                () -> stringHashkeyGet(stringsToHashKey, keySeeds, iterations),
                 "strings get"
         );
 
         System.gc();
         Utils.measureTime(
-                () -> {
-                    List<HashKey> hashKeys = new ArrayList<>(iterations);
-                    for (HashKey seed : keySeeds) {
-                        HashKey key = new HashKey(seed.getDestination(), seed.getSequenceId(), seed.getGatewayId());
-                        hashKeys.add(values.get(key));
-                    }
-                    return hashKeys;
-                },
+                () -> valueHashkeyGet(values, keySeeds, iterations),
                 "values get"
         );
+
+        log.info("warmupStrPut:" + warmupStrPut.size());
+        log.info("warmupValuePut:" + warmupValuePut.size());
+        log.info("warmupStrGet:" + warmupStrGet.size());
+        log.info("warmupValueGet:" + warmupValueGet.size());
+    }
+
+    private HashMap<String, HashKey> stringHashkeyPut(List<HashKey> keySeeds, int iterations) {
+        HashMap<String, HashKey> stringMap = new HashMap<>(iterations);
+        for (HashKey seed : keySeeds) {
+            String key = seed.getDestination() + seed.getSequenceId() + seed.getGatewayId();
+            stringMap.put(key, seed);
+        }
+        return stringMap;
+    }
+
+    private HashMap<HashKey, HashKey> valueHashkeyPut(List<HashKey> keySeeds, int iterations) {
+        HashMap<HashKey, HashKey> valueMap = new HashMap<>(iterations);
+        for (HashKey seed : keySeeds) {
+            HashKey key = new HashKey(seed.getDestination(), seed.getSequenceId(), seed.getGatewayId());
+            valueMap.put(key, seed);
+        }
+        return valueMap;
+    }
+
+    private List<HashKey> stringHashkeyGet(HashMap<String, HashKey> stringsToHashKey, List<HashKey> keySeeds, int iterations) {
+        List<HashKey> hashKeys = new ArrayList<>(iterations);
+        for (HashKey seed : keySeeds) {
+            String key = seed.getDestination() + seed.getSequenceId() + seed.getGatewayId();
+            hashKeys.add(stringsToHashKey.get(key));
+        }
+        return hashKeys;
+    }
+
+    private List<HashKey> valueHashkeyGet(HashMap<HashKey, HashKey> values, List<HashKey> keySeeds, int iterations) {
+        List<HashKey> hashKeys = new ArrayList<>(iterations);
+        for (HashKey seed : keySeeds) {
+            HashKey key = new HashKey(seed.getDestination(), seed.getSequenceId(), seed.getGatewayId());
+            hashKeys.add(values.get(key));
+        }
+        return hashKeys;
     }
 
     @Value
