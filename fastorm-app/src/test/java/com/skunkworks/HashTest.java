@@ -1,12 +1,17 @@
 package com.skunkworks;
 
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.Test;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import org.junit.Test;
+
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class HashTest {
@@ -39,16 +44,21 @@ public class HashTest {
         List<HashKey> warmupValueGet = valueHashkeyGet(values, keySeeds, iterations);
 
         System.gc();
-        Utils.measureTime(
+        List<HashKey> strGet = Utils.measureTime(
                 () -> stringHashkeyGet(stringsToHashKey, keySeeds, iterations),
                 "strings get"
         );
 
         System.gc();
-        Utils.measureTime(
+        List<HashKey> valuesGet = Utils.measureTime(
                 () -> valueHashkeyGet(values, keySeeds, iterations),
                 "values get"
         );
+
+        Set<HashKey> strGetSet = new HashSet<>(strGet);
+        Set<HashKey> valueGetSet = new HashSet<>(valuesGet);
+
+        assertTrue("Arrays match:", strGetSet.containsAll(valueGetSet));
 
         log.info("warmupStrPut:" + warmupStrPut.size());
         log.info("warmupValuePut:" + warmupValuePut.size());
