@@ -28,28 +28,37 @@ public class HashTest {
         HashMap<String, HashKey> warmupStrPut = stringHashkeyPut(keySeeds, iterations);
         HashMap<HashKey, HashKey> warmupValuePut = valueHashkeyPut(keySeeds, iterations);
 
-        System.gc();
+        //System.gc();
+        HashMap<HashKey, HashKey> valuesBla = Utils.measureTime(
+                () -> valueHashkeyPut(keySeeds, iterations),
+                "value insert"
+        );
+
+        HashMap<HashKey, HashKey> values = Utils.measureTime(
+                () -> valueHashkeyPut(keySeeds, iterations),
+                "values insert"
+        );
+        //System.gc();
+        HashMap<String, HashKey> stringsToHashKeyBla = Utils.measureTime(
+                () -> stringHashkeyPut(keySeeds, iterations),
+                "string insert"
+        );
+
         HashMap<String, HashKey> stringsToHashKey = Utils.measureTime(
                 () -> stringHashkeyPut(keySeeds, iterations),
                 "strings insert"
         );
 
-        System.gc();
-        HashMap<HashKey, HashKey> values = Utils.measureTime(
-                () -> valueHashkeyPut(keySeeds, iterations),
-                "values insert"
-        );
-
         List<HashKey> warmupStrGet = stringHashkeyGet(stringsToHashKey, keySeeds, iterations);
         List<HashKey> warmupValueGet = valueHashkeyGet(values, keySeeds, iterations);
 
-        System.gc();
+        //System.gc();
         List<HashKey> strGet = Utils.measureTime(
                 () -> stringHashkeyGet(stringsToHashKey, keySeeds, iterations),
                 "strings get"
         );
 
-        System.gc();
+        //System.gc();
         List<HashKey> valuesGet = Utils.measureTime(
                 () -> valueHashkeyGet(values, keySeeds, iterations),
                 "values get"
