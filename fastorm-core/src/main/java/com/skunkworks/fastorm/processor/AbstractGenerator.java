@@ -1,6 +1,7 @@
 package com.skunkworks.fastorm.processor;
 
 import com.skunkworks.fastorm.processor.tool.Tools;
+import freemarker.log.Logger;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateExceptionHandler;
 
@@ -35,6 +36,7 @@ public class AbstractGenerator {
 
     protected void write(String filename, String templatePath, Map<String, Object> context) throws Exception {
         //Logger.selectLoggerLibrary(Logger.LIBRARY_NONE); //Disable logging
+        //Logger.getLogger("").isDebugEnabled()
         JavaFileObject jfo = filer.createSourceFile(filename);
         try (Writer writer = jfo.openWriter()) {
             Configuration cfg = new Configuration(Configuration.VERSION_2_3_26);

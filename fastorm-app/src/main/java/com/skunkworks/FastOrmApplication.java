@@ -139,6 +139,6 @@ public class FastOrmApplication {
             customer.setLastName("Ivic" + i);
             customers.add(customer);
         }
-        customerRepo.save(customers);
+        customerRepo.saveAll(customers);
     }
 }

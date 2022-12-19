@@ -41,7 +41,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.persistence.Id;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -60,7 +60,7 @@ public class CacheGenerator extends AbstractGenerator {
     private static final String CLASS_SUFIX = "Generated";
     private static final String COMPLEX_KEY_SUFIX = "Key";
 
-    private Set<String> additionalImports = new HashSet<>();
+    private final Set<String> additionalImports = new HashSet<>();
 
     public CacheGenerator(ProcessingEnvironment processingEnv) {
         super(processingEnv);
@@ -252,7 +252,7 @@ public class CacheGenerator extends AbstractGenerator {
         FieldData idField = fields.stream().
                 filter(FieldData::isId).
                 findFirst().orElseGet(() -> fields.stream().
-                filter(field -> "id".equals(field.getName().toLowerCase())).
+                filter(field -> "id".equalsIgnoreCase(field.getName())).
                 findFirst().
                 orElseThrow(() -> new RuntimeException("Id field not found")));
         context.put("idField", idField);
@@ -359,7 +359,7 @@ public class CacheGenerator extends AbstractGenerator {
     }
 
     private void processQueryMethod(MethodAnalysisData methodData, TypeMirror declaredReturnType) {
-        final InputStream is = new ByteArrayInputStream(methodData.getName().getBytes(Charset.forName("UTF-8")));
+        final InputStream is = new ByteArrayInputStream(methodData.getName().getBytes(StandardCharsets.UTF_8));
         try {
             final CharStream inputStream = CharStreams.fromStream(is);
             final CacheQueryLexer lexer = new CacheQueryLexer(inputStream);

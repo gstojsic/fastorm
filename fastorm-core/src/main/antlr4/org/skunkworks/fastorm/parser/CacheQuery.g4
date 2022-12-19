@@ -16,6 +16,10 @@ number : DIGIT+;
 
 variable : LETTER (LETTER | DIGIT)*;
 
+fragment UPPERCASE : [A-Z];
+
+fragment LOWERCASE : [a-z];
+
 FIND_BY : 'findBy';
 
 AND : 'And';

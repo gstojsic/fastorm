@@ -31,7 +31,7 @@ import javax.persistence.Column;
 import javax.persistence.Id;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
 public class DaoGenerator extends AbstractGenerator {
     private static final String CLASS_SUFIX = "Generated";
 
-    private Set<String> additionalImports = new HashSet<>();
+    private final Set<String> additionalImports = new HashSet<>();
 
     public DaoGenerator(ProcessingEnvironment processingEnv) {
         super(processingEnv);
@@ -120,7 +120,7 @@ public class DaoGenerator extends AbstractGenerator {
         FieldData idField = fields.stream().
                 filter(FieldData::isId).
                 findFirst().orElseGet(() -> fields.stream().
-                filter(field -> "id".equals(field.getName().toLowerCase())).
+                filter(field -> "id".equalsIgnoreCase(field.getName())).
                 findFirst().
                 orElseThrow(() -> new RuntimeException("Id field not found")));
         context.put("idField", idField);
@@ -151,10 +151,7 @@ public class DaoGenerator extends AbstractGenerator {
             return false;
 
         //Skip transient fields
-        if (enclosedElement.getModifiers().contains(Modifier.TRANSIENT))
-            return false;
-
-        return true;
+        return !enclosedElement.getModifiers().contains(Modifier.TRANSIENT);
     }
 
     private MethodData processMethod(Element methodElement) {
@@ -194,7 +191,7 @@ public class DaoGenerator extends AbstractGenerator {
     }
 
     private void processQueryMethod(MethodData methodData, DeclaredType declaredReturnType) {
-        final InputStream is = new ByteArrayInputStream(methodData.getName().getBytes(Charset.forName("UTF-8")));
+        final InputStream is = new ByteArrayInputStream(methodData.getName().getBytes(StandardCharsets.UTF_8));
         try {
             final CharStream inputStream = CharStreams.fromStream(is);
             // Create an ExprLexer that feeds from that stream
@@ -262,8 +259,7 @@ public class DaoGenerator extends AbstractGenerator {
 
     private String getColumnName(Element field, String name) {
         Column columnAnnotation = field.getAnnotation(Column.class);
-        String columnAnnotationName = (columnAnnotation != null && !"".equals(columnAnnotation.name())) ? columnAnnotation.name() : name;
         //warn("columnAnnotationName:" + columnAnnotationName);
-        return columnAnnotationName;
+        return (columnAnnotation != null && !"".equals(columnAnnotation.name())) ? columnAnnotation.name() : name;
     }
 }
